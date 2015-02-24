@@ -23,6 +23,19 @@ void pollEvent() {
       case SDL_QUIT:
         quitSDL();
         break;
+      case SDL_KEYDOWN:
+      case SDL_KEYUP:
+        fprintf(stderr, "TODO: key\n");
+        break;
+      case SDL_WINDOWEVENT:
+        fprintf(stderr, "TODO: window event\n");
+        break;
+      case SDL_MOUSEMOTION:
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
+      case SDL_MOUSEWHEEL:
+        // don't do anything
+        break;
       default:
         fprintf(stderr, "Unknown event\n");
         break;
