@@ -236,50 +236,6 @@ class Tilemap
     def []=(i,x); @val[i] = x; end
   end
 end
-class Tone
-  def initialize(*args)
-    if args.length == 4 then
-      red, green, blue, gray = *args
-    elsif args.length == 3 then
-      red, green, blue, gray = *args, 0.0
-    elsif args.length == 0 then
-      red, green, blue, gray = 0.0, 0.0, 0.0, 0.0
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 0 or 3..4)")
-    end
-    @red = red
-    @green = green
-    @blue = blue
-    @gray = gray
-  end
-  def set(*args)
-    if args.length == 4 then
-      red, green, blue, gray = *args
-      @red = red
-      @green = green
-      @blue = blue
-      @gray = gray
-    elsif args.length == 3 then
-      red, green, blue, alpha = *args, 0.0
-      @red = red
-      @green = green
-      @blue = blue
-      @gray = gray
-    elsif args.length == 1 then
-      color, = *args
-      @red = color.red
-      @green = color.green
-      @blue = color.blue
-      @gray = color.gray
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 1 or 3..4)")
-    end
-  end
-  attr_accessor :red, :green, :blue, :gray
-  def self._load(s)
-    Tone.new
-  end
-end
 class Viewport
   def initialize(*args)
     if args.length == 4 then

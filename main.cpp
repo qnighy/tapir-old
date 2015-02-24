@@ -4,6 +4,7 @@
 
 #include "Color.h"
 #include "Rect.h"
+#include "Tone.h"
 #include "Graphics.h"
 #include "sdl_misc.h"
 
@@ -26,6 +27,7 @@ int main(int argc, char *argv[]) {
 
     InitColor();
     InitRect();
+    InitTone();
     InitGraphics();
 
     ruby_run_node(ruby_options(ruby_argc, ruby_argv));
