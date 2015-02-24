@@ -90,50 +90,6 @@ class Bitmap
   attr_accessor :font
   def font=(font); @font.set(font); end
 end
-class Color
-  def initialize(*args)
-    if args.length == 4 then
-      red, green, blue, alpha = *args
-    elsif args.length == 3 then
-      red, green, blue, alpha = *args, 255.0
-    elsif args.length == 0 then
-      red, green, blue, alpha = 0.0, 0.0, 0.0, 0.0
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 0 or 3..4)")
-    end
-    @red = red
-    @green = green
-    @blue = blue
-    @alpha = alpha
-  end
-  def set(*args)
-    if args.length == 4 then
-      red, green, blue, alpha = *args
-      @red = red
-      @green = green
-      @blue = blue
-      @alpha = alpha
-    elsif args.length == 3 then
-      red, green, blue, alpha = *args, 255.0
-      @red = red
-      @green = green
-      @blue = blue
-      @alpha = alpha
-    elsif args.length == 1 then
-      color, = *args
-      @red = color.red
-      @green = color.green
-      @blue = color.blue
-      @alpha = color.alpha
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 1 or 3..4)")
-    end
-  end
-  attr_accessor :red, :green, :blue, :alpha
-  def self._load(s)
-    Color.new
-  end
-end
 class Font
   def initialize(name = Font.default_name, size = Font.default_size)
     @bold = Font.default_bold
