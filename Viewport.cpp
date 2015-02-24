@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 
 #include "Viewport.h"
+#include "Graphics.h"
 #include "misc.h"
 
 void Viewport::initialize(int x, int y, int width, int height) {
@@ -15,16 +16,24 @@ void Viewport::initialize(int x, int y, int width, int height) {
   this->tone = Tone::create();
 
   this->is_disposed = false;
+  this->renderable_entry.type = RenderableType::VIEWPORT;
+  this->renderable_entry.y = 0;
+  this->renderable_entry.z = this->z;
+  this->renderable_entry.renderable_id = current_renderable_id++;
+  this->renderables = new std::vector<Renderable*>();
+  register_renderable((Renderable*)this, nullptr);
 }
 void Viewport::initialize(Rect *rect) {
   initialize(rect->x, rect->y, rect->width, rect->height);
 }
 void Viewport::initialize() {
-  initialize(0, 0, 0, 0);
+  // TODO
+  initialize(0, 0, 544, 416);
 }
 void Viewport::dispose() {
   if(!this->is_disposed) {
     this->is_disposed = true;
+    unregister_renderable((Renderable*)this, nullptr);
   }
 }
 bool Viewport::disposed() {
@@ -35,6 +44,9 @@ void Viewport::flash(Color *color, int duration) {
 }
 void Viewport::update() {
   // TODO: Viewport::update
+}
+
+void Viewport::render(SDL_Renderer *renderer) {
 }
 
 static void viewport_mark(Viewport *);
@@ -253,6 +265,7 @@ static VALUE rb_viewport_z(VALUE self) {
 static VALUE rb_viewport_set_z(VALUE self, VALUE z) {
   Viewport *ptr = convertViewport(self);
   ptr->z = NUM2INT(z);
+  ptr->renderable_entry.z = ptr->z;
   return z;
 }
 static VALUE rb_viewport_ox(VALUE self) {

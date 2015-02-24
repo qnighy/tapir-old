@@ -17,17 +17,37 @@ void Bitmap::initialize(const char *filename) {
     SDL_Quit();
     exit(1);
   }
+  fprintf(stderr, "loaded %s.png\n", filename);
   this->surface = IMG_Load_RW(rwops, true);
   this->font = Font::create();
+  this->texture = nullptr;
 }
 void Bitmap::initialize(int width, int height) {
-  this->surface = SDL_CreateRGBSurface(0,width,height,32,0,0,0,0);
+  Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = 0xff000000;
+#endif
+  this->surface = SDL_CreateRGBSurface(
+      0, width, height, 32, rmask, gmask, bmask, amask);
   this->font = Font::create();
+  this->texture = nullptr;
 }
 void Bitmap::dispose() {
   if(this->surface) {
     SDL_FreeSurface(this->surface);
     this->surface = nullptr;
+    if(this->texture) {
+      SDL_DestroyTexture(this->texture);
+      this->texture = nullptr;
+    }
   }
 }
 bool Bitmap::disposed() {
@@ -102,6 +122,13 @@ void Bitmap::draw_text(Rect *rect, const char *str,
 Rect *Bitmap::text_size(const char *str) {
   fprintf(stderr, "TODO: Bitmap::text_size\n");
   return Rect::create();
+}
+
+SDL_Texture *Bitmap::createTexture(SDL_Renderer *renderer) {
+  if(!this->texture) {
+    this->texture = SDL_CreateTextureFromSurface(renderer, this->surface);
+  }
+  return this->texture;
 }
 
 static void bitmap_mark(Bitmap *);

@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 
 #include "Sprite.h"
+#include "Graphics.h"
 #include "misc.h"
 
 void Sprite::initialize(Viewport *viewport) {
@@ -25,13 +26,21 @@ void Sprite::initialize(Viewport *viewport) {
   this->mirror = false;
   this->bush_depth = 0;
   this->bush_opacity = 128;
+  this->opacity = 255;
   this->blend_type = 0;
+  this->color = Color::create();
   this->tone = Tone::create();
 
   this->is_disposed = false;
+  this->renderable_entry.type = RenderableType::SPRITE;
+  this->renderable_entry.y = this->y;
+  this->renderable_entry.z = this->z;
+  this->renderable_entry.renderable_id = current_renderable_id++;
+  register_renderable((Renderable*)this, this->viewport);
 }
 void Sprite::dispose() {
   if(!this->is_disposed) {
+    unregister_renderable((Renderable*)this, this->viewport);
     this->is_disposed = true;
   }
 }
@@ -49,6 +58,51 @@ int Sprite::width() {
 }
 int Sprite::height() {
   return this->src_rect->height;
+}
+
+void Sprite::render(SDL_Renderer *renderer) {
+  // fprintf(stderr, "render!\n");
+  if(!this->visible || !this->bitmap) return;
+  SDL_Rect src_rect;
+  src_rect.x = this->src_rect->x;
+  src_rect.y = this->src_rect->y;
+  src_rect.w = this->src_rect->width;
+  src_rect.h = this->src_rect->height;
+  SDL_Rect dst_rect;
+  dst_rect.x = x-ox*zoom_x;
+  dst_rect.y = y-oy*zoom_y;
+  dst_rect.w = this->src_rect->width*zoom_x;
+  dst_rect.h = this->src_rect->height*zoom_y;
+  SDL_Texture *texture = this->bitmap->createTexture(renderer);
+  SDL_SetTextureAlphaMod(texture, opacity);
+  if(blend_type == 1) {
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
+  } else if(blend_type == 2) {
+    fprintf(stderr, "TODO: Sprite::render: subtractive blending\n");
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  } else {
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  }
+  if(angle != 0.0) {
+    fprintf(stderr, "TODO: Sprite::render: angle\n");
+  }
+  if(wave_amp != 0) {
+    fprintf(stderr, "TODO: Sprite::render: wave\n");
+  }
+  if(mirror) {
+    fprintf(stderr, "TODO: Sprite::render: mirror\n");
+  }
+  if(bush_depth != 0) {
+    fprintf(stderr, "TODO: Sprite::render: bush_depth\n");
+  }
+  if(color->alpha != 0.0) {
+    fprintf(stderr, "TODO: Sprite::render: color\n");
+  }
+  if(tone->red != 0.0 || tone->green != 0.0 ||
+      tone->blue != 0.0 || tone->gray != 0.0) {
+    fprintf(stderr, "TODO: Sprite::render: tone\n");
+  }
+  SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
 }
 
 static void sprite_mark(Sprite *);
@@ -108,6 +162,8 @@ static VALUE rb_sprite_opacity(VALUE self);
 static VALUE rb_sprite_set_opacity(VALUE self, VALUE opacity);
 static VALUE rb_sprite_blend_type(VALUE self);
 static VALUE rb_sprite_set_blend_type(VALUE self, VALUE blend_type);
+static VALUE rb_sprite_color(VALUE self);
+static VALUE rb_sprite_set_color(VALUE self, VALUE color);
 static VALUE rb_sprite_tone(VALUE self);
 static VALUE rb_sprite_set_tone(VALUE self, VALUE tone);
 
@@ -222,6 +278,10 @@ void InitSprite() {
       (VALUE(*)(...))rb_sprite_blend_type, 0);
   rb_define_method(rb_cSprite, "blend_type=",
       (VALUE(*)(...))rb_sprite_set_blend_type, 1);
+  rb_define_method(rb_cSprite, "color",
+      (VALUE(*)(...))rb_sprite_color, 0);
+  rb_define_method(rb_cSprite, "color=",
+      (VALUE(*)(...))rb_sprite_set_color, 1);
   rb_define_method(rb_cSprite, "tone",
       (VALUE(*)(...))rb_sprite_tone, 0);
   rb_define_method(rb_cSprite, "tone=",
@@ -258,6 +318,7 @@ static void sprite_mark(Sprite *ptr) {
   if(ptr->bitmap) rb_gc_mark(ptr->bitmap->rb_parent);
   rb_gc_mark(ptr->src_rect->rb_parent);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
+  rb_gc_mark(ptr->color->rb_parent);
   rb_gc_mark(ptr->tone->rb_parent);
 }
 
@@ -337,6 +398,7 @@ static VALUE rb_sprite_bitmap(VALUE self) {
 static VALUE rb_sprite_set_bitmap(VALUE self, VALUE bitmap) {
   Sprite *ptr = convertSprite(self);
   ptr->bitmap = convertBitmapOrNil(bitmap);
+  ptr->src_rect->set(ptr->bitmap->rect());
   return bitmap;
 }
 static VALUE rb_sprite_src_rect(VALUE self) {
@@ -354,7 +416,9 @@ static VALUE rb_sprite_viewport(VALUE self) {
 }
 static VALUE rb_sprite_set_viewport(VALUE self, VALUE viewport) {
   Sprite *ptr = convertSprite(self);
+  unregister_renderable((Renderable*)ptr, ptr->viewport);
   ptr->viewport = convertViewportOrNil(viewport);
+  register_renderable((Renderable*)ptr, ptr->viewport);
   return viewport;
 }
 static VALUE rb_sprite_visible(VALUE self) {
@@ -382,6 +446,7 @@ static VALUE rb_sprite_y(VALUE self) {
 static VALUE rb_sprite_set_y(VALUE self, VALUE y) {
   Sprite *ptr = convertSprite(self);
   ptr->y = NUM2INT(y);
+  ptr->renderable_entry.y = ptr->y;
   return y;
 }
 static VALUE rb_sprite_z(VALUE self) {
@@ -391,6 +456,7 @@ static VALUE rb_sprite_z(VALUE self) {
 static VALUE rb_sprite_set_z(VALUE self, VALUE z) {
   Sprite *ptr = convertSprite(self);
   ptr->z = NUM2INT(z);
+  ptr->renderable_entry.z = ptr->z;
   return z;
 }
 static VALUE rb_sprite_ox(VALUE self) {
@@ -518,6 +584,15 @@ static VALUE rb_sprite_set_blend_type(VALUE self, VALUE blend_type) {
   Sprite *ptr = convertSprite(self);
   ptr->blend_type = NUM2INT(blend_type);
   return blend_type;
+}
+static VALUE rb_sprite_color(VALUE self) {
+  Sprite *ptr = convertSprite(self);
+  return exportColor(ptr->color);
+}
+static VALUE rb_sprite_set_color(VALUE self, VALUE color) {
+  Sprite *ptr = convertSprite(self);
+  ptr->color->set(convertColor(color));
+  return color;
 }
 static VALUE rb_sprite_tone(VALUE self) {
   Sprite *ptr = convertSprite(self);

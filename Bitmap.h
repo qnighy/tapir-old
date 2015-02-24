@@ -11,6 +11,7 @@
 struct Bitmap {
   VALUE rb_parent;
   SDL_Surface *surface;
+  SDL_Texture *texture;
   Font *font;
 
   void initialize(const char *filename);
@@ -48,6 +49,8 @@ struct Bitmap {
 
   static Bitmap *create(const char *filename);
   static Bitmap *create(int width, int height);
+
+  SDL_Texture *createTexture(SDL_Renderer *renderer);
 };
 
 extern VALUE rb_cBitmap;

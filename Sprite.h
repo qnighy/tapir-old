@@ -9,8 +9,10 @@
 #include "Rect.h"
 #include "Tone.h"
 #include "Viewport.h"
+#include "renderable.h"
 
 struct Sprite {
+  struct Renderable renderable_entry;
   VALUE rb_parent;
 
   Bitmap *bitmap;
@@ -23,6 +25,7 @@ struct Sprite {
   double wave_phase;
   bool mirror;
   int bush_depth, bush_opacity, opacity, blend_type;
+  Color *color;
   Tone *tone;
 
   bool is_disposed;
@@ -36,6 +39,8 @@ struct Sprite {
   int height();
 
   static Sprite *create(Viewport *viewport = nullptr);
+
+  void render(SDL_Renderer *renderer);
 };
 
 extern VALUE rb_cSprite;

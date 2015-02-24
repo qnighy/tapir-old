@@ -1,6 +1,8 @@
 #ifndef VIEWPORT_H_INCLUDED
 #define VIEWPORT_H_INCLUDED
 
+#include <vector>
+
 #include <ruby.h>
 #include <SDL.h>
 
@@ -8,9 +10,10 @@
 #include "Color.h"
 #include "Rect.h"
 #include "Tone.h"
-#include "Viewport.h"
+#include "renderable.h"
 
 struct Viewport {
+  Renderable renderable_entry;
   VALUE rb_parent;
 
   Rect *rect;
@@ -20,6 +23,7 @@ struct Viewport {
   Tone *tone;
 
   bool is_disposed;
+  std::vector<Renderable*> *renderables;
 
   void initialize(int x, int y, int width, int height);
   void initialize(Rect *rect);
@@ -32,6 +36,8 @@ struct Viewport {
   static Viewport *create(int x, int y, int width, int height);
   static Viewport *create(Rect *rect);
   static Viewport *create();
+
+  void render(SDL_Renderer *renderer);
 };
 
 extern VALUE rb_cViewport;
