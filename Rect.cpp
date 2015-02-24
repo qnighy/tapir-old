@@ -95,15 +95,17 @@ Rect *convertRectOrNil(VALUE obj) {
   return convertRect(obj);
 }
 
-VALUE newRect(int x, int y, int width, int height) {
+Rect *newRect(int x, int y, int width, int height) {
   VALUE ret = rect_alloc(rb_cRect);
-  convertRect(ret)->initialize(x, y, width, height);
-  return ret;
+  Rect *ptr = convertRect(ret);
+  ptr->initialize(x, y, width, height);
+  return ptr;
 }
-VALUE newRect() {
+Rect *newRect() {
   VALUE ret = rect_alloc(rb_cRect);
-  convertRect(ret)->initialize();
-  return ret;
+  Rect *ptr = convertRect(ret);
+  ptr->initialize();
+  return ptr;
 }
 
 static void rect_mark(Rect *) {}

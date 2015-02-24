@@ -19,7 +19,7 @@ extern void InitRect();
 Rect *convertRect(VALUE obj);
 Rect *convertRectOrNil(VALUE obj);
 
-VALUE newRect(int x, int y, int width, int height);
-VALUE newRect();
+Rect *newRect(int x, int y, int width, int height);
+Rect *newRect();
 
 #endif // RECT_H_INCLUDED
