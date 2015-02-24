@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "Color.h"
+#include "Font.h"
 #include "Rect.h"
 #include "Tone.h"
 #include "Graphics.h"
@@ -26,6 +27,7 @@ int main(int argc, char *argv[]) {
     ruby_init();
 
     InitColor();
+    InitFont();
     InitRect();
     InitTone();
     InitGraphics();

@@ -90,35 +90,6 @@ class Bitmap
   attr_accessor :font
   def font=(font); @font.set(font); end
 end
-class Font
-  def initialize(name = Font.default_name, size = Font.default_size)
-    @bold = Font.default_bold
-    @italic = Font.default_italic
-    @shadow = Font.default_shadow
-    @outline = Font.default_outline
-    @color = Font.default_color
-    @out_color = Font.default_out_color
-  end
-  attr_accessor :name, :size, :bold, :italic, :shadow, :outline
-  attr_accessor :color, :out_color
-  def color=(color); @color.set(color); end
-  def out_color=(out_color); @out_color.set(out_color); end
-  class << self
-    attr_accessor :default_name, :default_size, :default_bold, :default_italic
-    attr_accessor :default_shadow, :default_outline, :default_color
-    attr_accessor :default_out_color
-    def default_color=(color); @default_color.set(color); end
-    def default_out_color=(out_color); @default_out_color.set(out_color); end
-  end
-  @default_name = "VL Gothic"
-  @default_size = 24
-  @default_bold = false
-  @default_italic = false
-  @default_shadow = false
-  @default_outline = true
-  @default_color = Color.new(255.0, 255.0, 255.0, 255.0)
-  @default_out_color = Color.new(0.0, 0.0, 0.0, 128.0)
-end
 class Plane
   def initialize(viewport = nil)
     @bitmap = nil
