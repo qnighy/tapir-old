@@ -21,5 +21,6 @@ extern void InitRect();
 
 Rect *convertRect(VALUE obj);
 Rect *convertRectOrNil(VALUE obj);
+VALUE exportRect(Rect *ptr);
 
 #endif // RECT_H_INCLUDED

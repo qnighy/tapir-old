@@ -30,5 +30,6 @@ extern void InitFont();
 
 Font *convertFont(VALUE obj);
 Font *convertFontOrNil(VALUE obj);
+VALUE exportFont(Font *ptr);
 
 #endif // FONT_H_INCLUDED

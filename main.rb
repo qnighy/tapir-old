@@ -36,47 +36,6 @@ class Plane
   def color=(color); @color.set(color); end
   def tone=(tone); @tone.set(tone); end
 end
-class Sprite
-  def initialize(viewport = nil)
-    @bitmap = nil
-    @src_rect = Rect.new
-    @viewport = viewport
-    @visible = true
-    @x = 0
-    @y = 0
-    @z = 0
-    @ox = 0
-    @oy = 0
-    @zoom_x = 1.0
-    @zoom_y = 1.0
-    @angle = 0
-    @wave_amp = 0
-    @wave_length = 180
-    @wave_speed = 360
-    @wave_phase = 0.0
-    @mirror = false
-    @bush_depth = 0
-    @bush_opacity = 128
-    @opacity = 255
-    @blend_type = 0
-    @color = Color.new
-    @tone = Tone.new
-
-    @disposed = false
-  end
-  def dispose; @disposed = true; nil; end
-  def disposed?; @disposed; end
-  def update; end
-  def width; @src_rect.width; end
-  def height; @src_rect.height; end
-  attr_accessor :bitmap, :src_rect, :viewport, :visible, :x, :y, :z, :ox, :oy
-  attr_accessor :zoom_x, :zoom_y, :angle, :wave_amp, :wave_length
-  attr_accessor :wave_speed, :wave_phase, :mirror, :bush_depth, :bush_opacity
-  attr_accessor :opacity, :blend_type, :color, :tone
-  def src_rect=(src_rect); @src_rect.set(src_rect); end
-  def color=(color); @color.set(color); end
-  def tone=(tone); @tone.set(tone); end
-end
 class Table
   def initialize(*args)
     if 1 <= args.length && args.length <= 3 then
@@ -128,39 +87,6 @@ class Tilemap
     def [](i); @val[i]; end
     def []=(i,x); @val[i] = x; end
   end
-end
-class Viewport
-  def initialize(*args)
-    if args.length == 4 then
-      x, y, width, height = *args
-      @rect = Rect.new(x, y, width, height)
-    elsif args.length == 1 then
-      rect, = *args
-      @rect = Rect.new
-      @rect.set(rect)
-    elsif args.length == 0 then
-      @rect = Rect.new(0, 0, Graphics.width, Graphics.height)
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 0 or 1 or 4)")
-    end
-    @visible = true
-    @z = 0
-    @ox = 0
-    @oy = 0
-    @color = Color.new
-    @tone = Tone.new
-
-    @disposed = false
-    nil
-  end
-  def dispose; @disposed = true; nil; end
-  def disposed?; @disposed; end
-  def flash(color, duration); end
-  def update; end
-  attr_accessor :rect, :visible, :z, :ox, :oy, :color, :tone
-  def rect=(rect); @rect.set(rect); end
-  def color=(color); @color.set(color); end
-  def tone=(tone); @tone.set(tone); end
 end
 class Window
   def initialize(*args)

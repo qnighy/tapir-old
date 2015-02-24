@@ -93,6 +93,9 @@ Tone *convertToneOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertTone(obj);
 }
+VALUE exportTone(Tone *ptr) {
+  return ptr ? ptr->rb_parent : Qnil;
+}
 
 Tone *Tone::create(double red, double green, double blue, double gray) {
   VALUE ret = tone_alloc(rb_cTone);

@@ -181,6 +181,9 @@ Font *convertFontOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertFont(obj);
 }
+VALUE exportFont(Font *ptr) {
+  return ptr ? ptr->rb_parent : Qnil;
+}
 
 Font *Font::create(VALUE name, int size) {
   VALUE ret = font_alloc(rb_cFont);
@@ -296,7 +299,7 @@ static VALUE rb_font_set_outline(VALUE self, VALUE outline) {
 }
 static VALUE rb_font_color(VALUE self) {
   Font *ptr = convertFont(self);
-  return (ptr->color)->rb_parent;
+  return exportColor(ptr->color);
 }
 static VALUE rb_font_set_color(VALUE self, VALUE color) {
   Font *ptr = convertFont(self);
@@ -305,7 +308,7 @@ static VALUE rb_font_set_color(VALUE self, VALUE color) {
 }
 static VALUE rb_font_out_color(VALUE self) {
   Font *ptr = convertFont(self);
-  return (ptr->out_color)->rb_parent;
+  return exportColor(ptr->out_color);
 }
 static VALUE rb_font_set_out_color(VALUE self, VALUE out_color) {
   Font *ptr = convertFont(self);
@@ -356,14 +359,14 @@ static VALUE rb_font_set_default_outline(VALUE, VALUE default_outline) {
   return default_outline;
 }
 static VALUE rb_font_default_color(VALUE) {
-  return (Font::default_color)->rb_parent;
+  return exportColor(Font::default_color);
 }
 static VALUE rb_font_set_default_color(VALUE, VALUE default_color) {
   Font::default_color->set(convertColor(default_color));
   return default_color;
 }
 static VALUE rb_font_default_out_color(VALUE) {
-  return (Font::default_out_color)->rb_parent;
+  return exportColor(Font::default_out_color);
 }
 static VALUE rb_font_set_default_out_color(VALUE, VALUE default_out_color) {
   Font::default_out_color->set(convertColor(default_out_color));

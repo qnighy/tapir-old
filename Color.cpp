@@ -93,6 +93,9 @@ Color *convertColorOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertColor(obj);
 }
+VALUE exportColor(Color *ptr) {
+  return ptr ? ptr->rb_parent : Qnil;
+}
 
 Color *Color::create(double red, double green, double blue, double alpha) {
   VALUE ret = color_alloc(rb_cColor);

@@ -198,6 +198,9 @@ Bitmap *convertBitmapOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertBitmap(obj);
 }
+VALUE exportBitmap(Bitmap *ptr) {
+  return ptr ? ptr->rb_parent : Qnil;
+}
 
 Bitmap *Bitmap::create(const char *filename) {
   VALUE ret = bitmap_alloc(rb_cBitmap);
@@ -274,7 +277,7 @@ static VALUE rb_bitmap_height(VALUE self) {
 }
 static VALUE rb_bitmap_rect(VALUE self) {
   Bitmap *ptr = convertBitmap(self);
-  return (ptr->rect())->rb_parent;
+  return exportRect(ptr->rect());
 }
 static VALUE rb_bitmap_blt(int argc, VALUE *argv, VALUE self) {
   Bitmap *ptr = convertBitmap(self);
@@ -392,7 +395,7 @@ static VALUE rb_bitmap_clear_rect(int argc, VALUE *argv, VALUE self) {
 
 static VALUE rb_bitmap_get_pixel(VALUE self, VALUE x, VALUE y) {
   Bitmap *ptr = convertBitmap(self);
-  return (ptr->get_pixel(x, y))->rb_parent;
+  return exportColor(ptr->get_pixel(x, y));
 }
 
 static VALUE rb_bitmap_set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
@@ -445,15 +448,15 @@ static VALUE rb_bitmap_draw_text(int argc, VALUE *argv, VALUE self) {
 }
 static VALUE rb_bitmap_text_size(VALUE self, VALUE str) {
   Bitmap *ptr = convertBitmap(self);
-  return (ptr->text_size(StringValueCStr(str)))->rb_parent;
+  return exportRect(ptr->text_size(StringValueCStr(str)));
 }
 
 static VALUE rb_bitmap_font(VALUE self) {
   Bitmap *ptr = convertBitmap(self);
-  return (ptr->font)->rb_parent;
+  return exportFont(ptr->font);
 }
 static VALUE rb_bitmap_set_font(VALUE self, VALUE font) {
   Bitmap *ptr = convertBitmap(self);
-  ptr->font = convertFont(font);
+  ptr->font->set(convertFont(font));
   return font;
 }

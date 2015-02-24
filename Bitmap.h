@@ -55,5 +55,6 @@ extern void InitBitmap();
 
 Bitmap *convertBitmap(VALUE obj);
 Bitmap *convertBitmapOrNil(VALUE obj);
+VALUE exportBitmap(Bitmap *ptr);
 
 #endif // BITMAP_H_INCLUDED

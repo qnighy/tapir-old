@@ -94,6 +94,9 @@ Rect *convertRectOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertRect(obj);
 }
+VALUE exportRect(Rect *ptr) {
+  return ptr ? ptr->rb_parent : Qnil;
+}
 
 Rect *Rect::create(int x, int y, int width, int height) {
   VALUE ret = rect_alloc(rb_cRect);

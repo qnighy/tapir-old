@@ -6,7 +6,9 @@
 #include "Color.h"
 #include "Font.h"
 #include "Rect.h"
+#include "Sprite.h"
 #include "Tone.h"
+#include "Viewport.h"
 #include "Graphics.h"
 #include "sdl_misc.h"
 
@@ -32,7 +34,9 @@ int main(int, char **) {
     InitColor();
     InitFont();
     InitRect();
+    InitSprite();
     InitTone();
+    InitViewport();
     InitGraphics();
 
     ruby_run_node(ruby_options(ruby_argc, ruby_argv));

@@ -20,5 +20,6 @@ extern void InitTone();
 
 Tone *convertTone(VALUE obj);
 Tone *convertToneOrNil(VALUE obj);
+VALUE exportTone(Tone *ptr);
 
 #endif // TONE_H_INCLUDED

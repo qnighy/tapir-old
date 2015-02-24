@@ -20,5 +20,6 @@ extern void InitColor();
 
 Color *convertColor(VALUE obj);
 Color *convertColorOrNil(VALUE obj);
+VALUE exportColor(Color *ptr);
 
 #endif // COLOR_H_INCLUDED
