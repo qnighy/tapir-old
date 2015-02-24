@@ -21,6 +21,8 @@ struct Font {
   void initialize(VALUE name = default_name, int size = default_size);
   static bool exist(VALUE name);
   void set(Font *font);
+
+  static Font *create(VALUE name = Font::default_name, int size = Font::default_size);
 };
 
 extern VALUE rb_cFont;
@@ -28,7 +30,5 @@ extern void InitFont();
 
 Font *convertFont(VALUE obj);
 Font *convertFontOrNil(VALUE obj);
-
-Font *newFont(VALUE name = Font::default_name, int size = Font::default_size);
 
 #endif // FONT_H_INCLUDED

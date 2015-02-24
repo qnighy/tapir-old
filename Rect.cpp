@@ -95,13 +95,13 @@ Rect *convertRectOrNil(VALUE obj) {
   return convertRect(obj);
 }
 
-Rect *newRect(int x, int y, int width, int height) {
+Rect *Rect::create(int x, int y, int width, int height) {
   VALUE ret = rect_alloc(rb_cRect);
   Rect *ptr = convertRect(ret);
   ptr->initialize(x, y, width, height);
   return ptr;
 }
-Rect *newRect() {
+Rect *Rect::create() {
   VALUE ret = rect_alloc(rb_cRect);
   Rect *ptr = convertRect(ret);
   ptr->initialize();

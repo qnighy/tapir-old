@@ -11,6 +11,9 @@ struct Rect {
   void set(int x, int y, int width, int height);
   void set(Rect *rect);
   void empty();
+
+  static Rect *create(int x, int y, int width, int height);
+  static Rect *create();
 };
 
 extern VALUE rb_cRect;
@@ -18,8 +21,5 @@ extern void InitRect();
 
 Rect *convertRect(VALUE obj);
 Rect *convertRectOrNil(VALUE obj);
-
-Rect *newRect(int x, int y, int width, int height);
-Rect *newRect();
 
 #endif // RECT_H_INCLUDED

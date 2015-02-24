@@ -94,13 +94,13 @@ Tone *convertToneOrNil(VALUE obj) {
   return convertTone(obj);
 }
 
-Tone *newTone(double red, double green, double blue, double gray) {
+Tone *Tone::create(double red, double green, double blue, double gray) {
   VALUE ret = tone_alloc(rb_cTone);
   Tone *ptr = convertTone(ret);
   ptr->initialize(red, green, blue, gray);
   return ptr;
 }
-Tone *newTone() {
+Tone *Tone::create() {
   VALUE ret = tone_alloc(rb_cTone);
   Tone *ptr = convertTone(ret);
   ptr->initialize();

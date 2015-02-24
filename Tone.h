@@ -10,6 +10,9 @@ struct Tone {
   void initialize();
   void set(double red, double green, double blue, double gray = 0.0);
   void set(Tone *tone);
+
+  static Tone *create(double red, double green, double blue, double gray = 0.0);
+  static Tone *create();
 };
 
 extern VALUE rb_cTone;
@@ -17,8 +20,5 @@ extern void InitTone();
 
 Tone *convertTone(VALUE obj);
 Tone *convertToneOrNil(VALUE obj);
-
-Tone *newTone(double red, double green, double blue, double gray = 0.0);
-Tone *newTone();
 
 #endif // TONE_H_INCLUDED

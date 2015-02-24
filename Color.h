@@ -10,6 +10,9 @@ struct Color {
   void initialize();
   void set(double red, double green, double blue, double alpha = 255.0);
   void set(Color *color);
+
+  static Color *create(double red, double green, double blue, double alpha = 255.0);
+  static Color *create();
 };
 
 extern VALUE rb_cColor;
@@ -17,8 +20,5 @@ extern void InitColor();
 
 Color *convertColor(VALUE obj);
 Color *convertColorOrNil(VALUE obj);
-
-Color *newColor(double red, double green, double blue, double alpha = 255.0);
-Color *newColor();
 
 #endif // COLOR_H_INCLUDED

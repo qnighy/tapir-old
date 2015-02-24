@@ -94,13 +94,13 @@ Color *convertColorOrNil(VALUE obj) {
   return convertColor(obj);
 }
 
-Color *newColor(double red, double green, double blue, double alpha) {
+Color *Color::create(double red, double green, double blue, double alpha) {
   VALUE ret = color_alloc(rb_cColor);
   Color *ptr = convertColor(ret);
   ptr->initialize(red, green, blue, alpha);
   return ptr;
 }
-Color *newColor() {
+Color *Color::create() {
   VALUE ret = color_alloc(rb_cColor);
   Color *ptr = convertColor(ret);
   ptr->initialize();

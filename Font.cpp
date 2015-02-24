@@ -8,8 +8,8 @@ void Font::initialize(VALUE name, int size) {
   this->italic = default_italic;
   this->shadow = default_shadow;
   this->outline = default_outline;
-  this->color = newColor();
-  this->out_color = newColor();
+  this->color = Color::create();
+  this->out_color = Color::create();
   this->color->set(default_color);
   this->out_color->set(default_out_color);
 }
@@ -160,8 +160,8 @@ void InitFont() {
   Font::default_italic = false;
   Font::default_shadow = false;
   Font::default_outline = true;
-  Font::default_color = newColor();
-  Font::default_out_color = newColor();
+  Font::default_color = Color::create();
+  Font::default_out_color = Color::create();
   rb_gc_register_address(&Font::default_color->rb_parent);
   rb_gc_register_address(&Font::default_out_color->rb_parent);
 }
@@ -182,7 +182,7 @@ Font *convertFontOrNil(VALUE obj) {
   return convertFont(obj);
 }
 
-Font *newFont(VALUE name, int size) {
+Font *Font::create(VALUE name, int size) {
   VALUE ret = font_alloc(rb_cFont);
   Font *ptr = convertFont(ret);
   ptr->initialize(name, size);
