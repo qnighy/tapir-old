@@ -1,9 +1,15 @@
 #include <ruby.h>
+#include <SDL.h>
 #include <cstdio>
+
+#include "Graphics.h"
+#include "sdl_misc.h"
 
 RUBY_GLOBAL_SETUP
 
 int main(int argc, char *argv[]) {
+  initSDL();
+
   int ruby_argc = 2;
   char *ruby_argv_array[] = {
     (char*)"ruby",
@@ -15,10 +21,12 @@ int main(int argc, char *argv[]) {
   {
     RUBY_INIT_STACK;
     ruby_init();
-    // ruby_init_loadpath();
+
+    InitGraphics();
 
     ruby_run_node(ruby_options(ruby_argc, ruby_argv));
   }
   printf("Done.\n");
+  quitSDL();
   return 0;
 }

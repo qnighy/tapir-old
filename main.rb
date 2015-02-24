@@ -477,9 +477,6 @@ module Audio
   def self.se_fade(time); end
 end
 module Graphics
-  def self.update
-    sleep(1.0/60)
-  end
   def self.wait(duration)
     duration.times { Graphics.update }
   end
