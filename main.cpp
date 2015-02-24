@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <cstdio>
 
+#include "Bitmap.h"
 #include "Color.h"
 #include "Font.h"
 #include "Rect.h"
@@ -11,7 +12,8 @@
 
 RUBY_GLOBAL_SETUP
 
-int main(int argc, char *argv[]) {
+// int main(int argc, char *argv[]) {
+int main(int, char **) {
   initSDL();
 
   int ruby_argc = 2;
@@ -26,6 +28,7 @@ int main(int argc, char *argv[]) {
     RUBY_INIT_STACK;
     ruby_init();
 
+    InitBitmap();
     InitColor();
     InitFont();
     InitRect();
