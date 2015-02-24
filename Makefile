@@ -13,7 +13,7 @@ EXEC = main
 # OBJS = main.o \
 #        Bitmap.o Color.o Font.o Plane.o Rect.o Sprite.o \
 #        Table.o Tilemap.o Tone.o Viewport.o Window.o
-OBJS = main.o sdl_misc.o Graphics.o
+OBJS = main.o sdl_misc.o Rect.o Graphics.o
 
 all: $(EXEC)
 

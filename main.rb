@@ -187,48 +187,6 @@ class Plane
   def color=(color); @color.set(color); end
   def tone=(tone); @tone.set(tone); end
 end
-class Rect
-  def initialize(*args)
-    if args.length == 4 then
-      x, y, width, height = *args
-      @x = x
-      @y = y
-      @width = width
-      @height = height
-    elsif args.length == 0 then
-      @x = 0
-      @y = 0
-      @width = 0
-      @height = height
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 0 or 4)")
-    end
-  end
-  def set(*args)
-    if args.length == 4 then
-      x, y, width, height = *args
-      @x = x
-      @y = y
-      @width = width
-      @height = height
-    elsif args.length == 1 then
-      rect, = *args
-      @x = rect.x
-      @y = rect.y
-      @width = rect.width
-      @height = rect.height
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 1 or 4)")
-    end
-  end
-  def empty
-    @x = 0
-    @y = 0
-    @width = 0
-    @height = 0
-  end
-  attr_accessor :x, :y, :width, :height
-end
 class Sprite
   def initialize(viewport = nil)
     @bitmap = nil
