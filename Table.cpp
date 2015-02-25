@@ -277,7 +277,7 @@ static void put_short(char *ptr, uint32_t val) {
 static VALUE rb_table_old_dump(VALUE self, VALUE) {
   Table *ptr = convertTable(self);
   int size = ptr->xsize * ptr->ysize * ptr->zsize;
-  char *s = new char[size];
+  char *s = new char[20+2*size];
   put_int(s, ptr->dim);
   put_int(s+4, ptr->xsize);
   put_int(s+8, ptr->ysize);
