@@ -164,6 +164,7 @@ void Bitmap::radial_blur(int angle, int division) {
 }
 void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
     int align) {
+  if(!str[0]) return;
   TTF_Font *font = this->font->createTTFFont();
   if(!font) {
     fprintf(stderr, "Font Not Found\n");
@@ -178,8 +179,20 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   color.a = this->font->color->alpha;
   SDL_Surface *text_surface = TTF_RenderUTF8_Blended(
       font, str, color);
+  if(!text_surface) {
+    fprintf(stderr, "Can't draw text: %s\n", SDL_GetError());
+    SDL_DestroyRenderer(renderer);
+    return;
+  }
   SDL_Texture *text_texture = SDL_CreateTextureFromSurface(
       renderer, text_surface);
+  if(!text_texture) {
+    fprintf(stderr,
+        "Can't get texture of rendered text: %s\n", SDL_GetError());
+    SDL_FreeSurface(text_surface);
+    SDL_DestroyRenderer(renderer);
+    return;
+  }
   SDL_Rect dst_rect;
   int w = text_surface->w;
   if(w >= width) {

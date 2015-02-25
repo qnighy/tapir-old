@@ -96,11 +96,11 @@ void Sprite::render(SDL_Renderer *renderer) {
     fprintf(stderr, "TODO: Sprite::render: bush_depth\n");
   }
   if(color->alpha != 0.0) {
-    fprintf(stderr, "TODO: Sprite::render: color\n");
+    // fprintf(stderr, "TODO: Sprite::render: color\n");
   }
   if(tone->red != 0.0 || tone->green != 0.0 ||
       tone->blue != 0.0 || tone->gray != 0.0) {
-    fprintf(stderr, "TODO: Sprite::render: tone\n");
+    // fprintf(stderr, "TODO: Sprite::render: tone\n");
   }
   SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
 }

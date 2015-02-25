@@ -249,14 +249,30 @@ static VALUE rb_table_old_load(VALUE, VALUE str) {
   VALUE ret = table_alloc(rb_cTable);
   Table *ptr = convertTable(ret);
   ptr->data = nullptr;
+  str = StringValue(str);
   char *s = StringValuePtr(str);
-  if(!s) return ret;
+  if(!s) {
+    fprintf(stderr, "warning: broken marshal data of Table\n");
+    ptr->initialize(0);
+    return ret;
+  }
+  int len = RSTRING_LEN(str);
+  if(len < 20) {
+    fprintf(stderr, "warning: broken marshal data of Table\n");
+    ptr->initialize(0);
+    return ret;
+  }
   // TODO make it more safe
   ptr->dim = get_int(s);
   ptr->xsize = get_int(s+4);
   ptr->ysize = get_int(s+8);
   ptr->zsize = get_int(s+12);
   int size = get_int(s+16);
+  if(len < 20+size*2) {
+    fprintf(stderr, "warning: broken marshal data of Table\n");
+    ptr->initialize(0);
+    return ret;
+  }
   ptr->data = new short[size];
   for(int i = 0; i < size; ++i) {
     ptr->data[i] = get_short(s+20+i*2);
@@ -286,7 +302,7 @@ static VALUE rb_table_old_dump(VALUE self, VALUE) {
   for(int i = 0; i < size; ++i) {
     put_short(s+20+i*2, ptr->data[i]);
   }
-  VALUE ret = rb_str_new(s, size);
+  VALUE ret = rb_str_new(s, 20+2*size);
   delete[] s;
   return ret;
 }
