@@ -211,6 +211,8 @@ Font *Font::create(VALUE name, int size) {
 }
 
 static TTF_Font *retrieveFont(std::string name, int size) {
+  // TODO size adjustment
+  size = size * 0.8;
   auto iter = Font::font_caches.find(make_pair(name, size));
   if(iter != Font::font_caches.end()) return iter->second;
   auto path_iter = Font::family_names.find(name);

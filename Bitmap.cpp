@@ -113,14 +113,28 @@ void Bitmap::clear_rect(Rect *rect) {
 }
 Color *Bitmap::get_pixel(int x, int y) {
   SDL_LockSurface(surface);
-  unsigned char *ptr =
-    (unsigned char*)surface->pixels + y * surface->pitch + x * 4;
-  unsigned char red = ptr[0];
-  unsigned char green = ptr[1];
-  unsigned char blue = ptr[2];
-  unsigned char alpha = ptr[3];
+  SDL_PixelFormat *fmt = surface->format;
+  Uint8 *ptr =
+    (Uint8*)surface->pixels + y * surface->pitch + x * fmt->BytesPerPixel;
+  Color *ret = nullptr;
+  if(fmt->BytesPerPixel==1) {
+    SDL_Color color = fmt->palette->colors[*ptr];
+    ret = Color::create(color.r, color.g, color.b, color.a);
+  } else if(fmt->BytesPerPixel==2) {
+    // TODO
+  } else if(fmt->BytesPerPixel==3) {
+    // TODO
+  } else if(fmt->BytesPerPixel==4) {
+    // TODO
+    Uint32 val = *(Uint32*)ptr;
+    int red = ((val&fmt->Rmask)>>fmt->Rshift)<<fmt->Rloss;
+    int green = ((val&fmt->Gmask)>>fmt->Gshift)<<fmt->Gloss;
+    int blue = ((val&fmt->Bmask)>>fmt->Bshift)<<fmt->Bloss;
+    int alpha = ((val&fmt->Amask)>>fmt->Ashift)<<fmt->Aloss;
+    ret = Color::create(red, green, blue, alpha);
+  }
   SDL_UnlockSurface(surface);
-  return Color::create(red, green, blue, alpha);
+  return ret;
 }
 void Bitmap::set_pixel(int x, int y, Color *color) {
   fprintf(stderr, "TODO: Bitmap::set_pixel\n");
@@ -148,6 +162,8 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   color.g = this->font->color->green;
   color.b = this->font->color->blue;
   color.a = this->font->color->alpha;
+  fprintf(stderr, "color = (%d, %d, %d, %d)\n",
+      color.r, color.g, color.b, color.a);
   SDL_Surface *text_surface = TTF_RenderUTF8_Blended(
       font, str, color);
   SDL_Texture *text_texture = SDL_CreateTextureFromSurface(
@@ -161,11 +177,15 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
       w = width;
     }
   }
+  // TODO: shadow and outline
   dst_rect.x = x + (width-w)*align/2;
   dst_rect.y = y + (height-text_surface->h)/2;
   dst_rect.w = w;
   dst_rect.h = text_surface->h;
-  SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
+  SDL_SetTextureAlphaMod(text_texture, 255);
+  // TODO: correct blend mode needed
+  // SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
+  SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_NONE);
   SDL_RenderCopy(renderer, text_texture, NULL, &dst_rect);
   SDL_DestroyTexture(text_texture);
   SDL_FreeSurface(text_surface);
@@ -490,12 +510,12 @@ static VALUE rb_bitmap_clear_rect(int argc, VALUE *argv, VALUE self) {
 
 static VALUE rb_bitmap_get_pixel(VALUE self, VALUE x, VALUE y) {
   Bitmap *ptr = convertBitmap(self);
-  return exportColor(ptr->get_pixel(x, y));
+  return exportColor(ptr->get_pixel(NUM2INT(x), NUM2INT(y)));
 }
 
 static VALUE rb_bitmap_set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
   Bitmap *ptr = convertBitmap(self);
-  ptr->set_pixel(x, y, convertColor(color));
+  ptr->set_pixel(NUM2INT(x), NUM2INT(y), convertColor(color));
   return color;
 }
 static VALUE rb_bitmap_hue_change(VALUE self, VALUE hue) {

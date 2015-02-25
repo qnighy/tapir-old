@@ -69,14 +69,41 @@ void Window::render(SDL_Renderer *renderer) {
   if(!this->visible) return;
   // TODO: Window::render
   // fprintf(stderr, "render!\n");
+  int x = this->x;
+  int y = this->y + this->height*(255-this->openness)/510;
+  int width = this->width;
+  int height = this->height*this->openness/255;
+  if(width <= 4 || height <= 4) return;
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-  SDL_SetRenderDrawColor(renderer, 0, 0, 255, 192);
+  SDL_SetRenderDrawColor(renderer, 0, 0, 255, this->back_opacity);
   SDL_Rect rect;
-  rect.x = this->x;
-  rect.y = this->y;
-  rect.w = this->width;
-  rect.h = this->height;
+  rect.x = x+2;
+  rect.y = y+2;
+  rect.w = width-4;
+  rect.h = height-4;
   SDL_RenderFillRect(renderer, &rect);
+  if(tone->red != 0.0 || tone->green != 0.0 ||
+      tone->blue != 0.0 || tone->gray != 0.0) {
+    // fprintf(stderr, "TODO: Window::render: tone\n");
+  }
+  if(openness != 255) return;
+
+  SDL_Rect src_rect;
+  src_rect.x = ox;
+  src_rect.y = oy;
+  src_rect.w = width-padding-padding;
+  src_rect.h = height-padding-padding_bottom;
+  SDL_Rect dst_rect;
+  dst_rect.x = x+padding;
+  dst_rect.y = y+padding;
+  dst_rect.w = width-padding-padding;
+  dst_rect.h = height-padding-padding_bottom;
+  SDL_Texture *texture = this->contents->createTexture(renderer);
+  SDL_SetTextureAlphaMod(texture, contents_opacity);
+  SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+  // SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE);
+  SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+  // SDL_RenderCopy(renderer, texture, NULL, NULL);
 }
 
 static void window_mark(Window *);
@@ -362,11 +389,11 @@ static VALUE rb_window_move(
 }
 static VALUE rb_window_open_p(VALUE self) {
   Window *ptr = convertWindow(self);
-  return INT2NUM(ptr->open_p());
+  return (ptr->open_p()) ? Qtrue : Qfalse;
 }
 static VALUE rb_window_close_p(VALUE self) {
   Window *ptr = convertWindow(self);
-  return INT2NUM(ptr->close_p());
+  return (ptr->close_p()) ? Qtrue : Qfalse;
 }
 
 static VALUE rb_window_windowskin(VALUE self) {
