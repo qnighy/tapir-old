@@ -42,8 +42,6 @@ void InitFileMisc() {
       entry.key = SDL_ReadLE32(archive) ^ archive_key;
       entry.iopos = 0;
       uint32_t filename_size = SDL_ReadLE32(archive) ^ archive_key;
-      fprintf(stderr, "key = 0x%08x, pos = %u, size = %u, filename_size = %u\n",
-          entry.key, entry.entry_pos, entry.entry_size, filename_size);
       if(entry.entry_pos == 0) break;
       std::string filename;
       filename.resize(filename_size);
@@ -56,7 +54,6 @@ void InitFileMisc() {
           filename[i] = '/';
         }
       }
-      fprintf(stderr, "filename = %s\n", filename.c_str());
       archive_entries[filename] = entry;
     }
   } else {

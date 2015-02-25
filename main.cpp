@@ -9,6 +9,7 @@
 #include "Sprite.h"
 #include "Tone.h"
 #include "Viewport.h"
+#include "Window.h"
 #include "Graphics.h"
 #include "sdl_misc.h"
 #include "file_misc.h"
@@ -42,6 +43,7 @@ int main(int, char **) {
     InitSprite();
     InitTone();
     InitViewport();
+    InitWindow();
     InitGraphics();
 
     ruby_run_node(ruby_options(ruby_argc, ruby_argv));

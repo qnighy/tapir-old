@@ -5,6 +5,7 @@
 
 #include "Sprite.h"
 #include "Viewport.h"
+#include "Window.h"
 #include "Graphics.h"
 #include "sdl_misc.h"
 #include "renderable.h"
@@ -36,6 +37,9 @@ void render_renderable(Renderable *r, SDL_Renderer *renderer) {
       break;
     case RenderableType::VIEWPORT:
       ((Viewport*)r)->render(renderer);
+      break;
+    case RenderableType::WINDOW:
+      ((Window*)r)->render(renderer);
       break;
     default:
       break;

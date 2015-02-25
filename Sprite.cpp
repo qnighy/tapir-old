@@ -61,8 +61,8 @@ int Sprite::height() {
 }
 
 void Sprite::render(SDL_Renderer *renderer) {
-  // fprintf(stderr, "render!\n");
   if(!this->visible || !this->bitmap) return;
+  // fprintf(stderr, "render!\n");
   SDL_Rect src_rect;
   src_rect.x = this->src_rect->x;
   src_rect.y = this->src_rect->y;

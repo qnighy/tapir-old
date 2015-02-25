@@ -76,62 +76,6 @@ class Tilemap
     def []=(i,x); @val[i] = x; end
   end
 end
-class Window
-  def initialize(*args)
-    if args.length == 4 then
-      x, y, width, height = *args
-      @x = x
-      @y = y
-      @width = width
-      @height = height
-    elsif args.length == 0 then
-      @x = 0
-      @y = y
-      @width = 0
-      @height = 0
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 0 or 4)")
-    end
-    @windowskin = Bitmap.new(1,1)
-    @contents = Bitmap.new(1,1)
-    @cursor_rect = Rect.new
-    @viewport = nil
-    @active = true
-    @visible = true
-    @arrows_visible = true
-    @pause = false
-    @z = 100
-    @ox = 0
-    @oy = 0
-    @padding = 12
-    @padding_bottom = 12
-    @opacity = 255
-    @back_opacity = 192
-    @contents_opacity = 255
-    @openness = 255
-    @tone = Tone.new
-
-    @disposed = false
-    nil
-  end
-  def dispose; @disposed = true; nil; end
-  def disposed?; @disposed; end
-  def update; end
-  def move(x, y, width, height)
-    @x = x
-    @y = y
-    @width = width
-    @height = height
-  end
-  def open?; openness == 255; end
-  def close?; openness == 0; end
-  attr_accessor :windowskin, :contents, :cursor_rect, :viewport, :active
-  attr_accessor :visible, :arrows_visible, :pause, :x, :y, :width, :height
-  attr_accessor :z, :ox, :oy, :padding, :padding_bottom, :opacity
-  attr_accessor :back_opacity, :contents_opacity, :openness, :tone
-  def cursor_rect=(cursor_rect); @cursor_rect.set(cursor_rect); end
-  def tone=(tone); @tone.set(tone); end
-end
 class RGSSError < StandardError; end
 class RGSSReset < Exception; end
 
