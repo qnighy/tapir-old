@@ -29,10 +29,10 @@ void pollEvent() {
         break;
       case SDL_KEYDOWN:
       case SDL_KEYUP:
-        fprintf(stderr, "TODO: key\n");
+        // fprintf(stderr, "TODO: key\n");
         break;
       case SDL_WINDOWEVENT:
-        fprintf(stderr, "TODO: window event\n");
+        // fprintf(stderr, "TODO: window event\n");
         break;
       case SDL_MOUSEMOTION:
       case SDL_MOUSEBUTTONDOWN:

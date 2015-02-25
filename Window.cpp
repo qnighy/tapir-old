@@ -88,6 +88,17 @@ void Window::render(SDL_Renderer *renderer) {
   }
   if(openness != 255) return;
 
+  {
+    SDL_Rect cursor_rect;
+    cursor_rect.x = x+padding-ox+this->cursor_rect->x;
+    cursor_rect.y = y+padding-oy+this->cursor_rect->y;
+    cursor_rect.w = this->cursor_rect->width;
+    cursor_rect.h = this->cursor_rect->height;
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, active ? 100 : 50);
+    SDL_RenderFillRect(renderer, &cursor_rect);
+  }
+
   SDL_Rect src_rect;
   src_rect.x = ox;
   src_rect.y = oy;

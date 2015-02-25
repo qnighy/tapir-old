@@ -11,6 +11,7 @@
 #include "Viewport.h"
 #include "Window.h"
 #include "Graphics.h"
+#include "Input.h"
 #include "sdl_misc.h"
 #include "file_misc.h"
 #include "rpg_rb.h"
@@ -45,6 +46,7 @@ int main(int, char **) {
     InitViewport();
     InitWindow();
     InitGraphics();
+    InitInput();
 
     ruby_run_node(ruby_options(ruby_argc, ruby_argv));
   }

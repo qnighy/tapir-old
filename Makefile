@@ -17,7 +17,7 @@ EXEC = main
 #        Table.o Tilemap.o Tone.o Viewport.o Window.o
 OBJS = main.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
        Bitmap.o Color.o Font.o Rect.o Sprite.o Tone.o Viewport.o \
-       Window.o Graphics.o
+       Window.o Graphics.o Input.o
 
 all: $(EXEC)
 

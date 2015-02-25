@@ -119,14 +119,11 @@ module Graphics
   class << self
     attr_accessor :frame_rate, :frame_count, :brightness
   end
+  @frame_rate = 60
+  @frame_count = 0
+  @brightness = 255
 end
 module Input
-  def self.update; end
-  def self.press?(sym); false; end
-  def self.trigger?(sym); false; end
-  def self.repeat?(sym); false; end
-  def self.dir4; 0; end
-  def self.dir8; 0; end
   DOWN = :DOWN
   LEFT = :LEFT
   RIGHT = :RIGHT
