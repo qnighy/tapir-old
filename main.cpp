@@ -11,6 +11,8 @@
 #include "Viewport.h"
 #include "Graphics.h"
 #include "sdl_misc.h"
+#include "file_misc.h"
+#include "rpg_rb.h"
 
 RUBY_GLOBAL_SETUP
 
@@ -21,7 +23,7 @@ int main(int, char **) {
   int ruby_argc = 2;
   char *ruby_argv_array[] = {
     (char*)"ruby",
-    (char*)"main.rb",
+    (char*)"/home/qnighy/workdir/vxace/ext/main.rb",
     NULL
   };
   char **ruby_argv = ruby_argv_array;
@@ -29,6 +31,9 @@ int main(int, char **) {
   {
     RUBY_INIT_STACK;
     ruby_init();
+
+    InitFileMisc();
+    InitRPG();
 
     InitBitmap();
     InitColor();

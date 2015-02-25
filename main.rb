@@ -1,5 +1,3 @@
-load "rpg.rb"
-Dir.chdir("/home/qnighy/workdir/vxace/Sakusaku")
 require "zlib"
 
 def saturate(num, minval, maxval)
@@ -217,21 +215,14 @@ module Input
   F9 = :F9
 end
 
-def load_data(path)
-  path = path.gsub("\\", "/")
-  File.open(path, "r") do|file|
-    Marshal.load(file)
-  end
-end
 def rgss_main
   yield
 rescue RGSSReset
   retry
 end
-File.open("Data/Scripts.rvdata2", "r") do|file|
-  Marshal.load(file).each do|num,title,script|
-    s = Zlib::Inflate::inflate(script)
-    s.force_encoding("utf-8")
-    eval(s, binding, title)
-  end
+
+load_data("Data/Scripts.rvdata2").each do|num,title,script|
+  s = Zlib::Inflate::inflate(script)
+  s.force_encoding("utf-8")
+  eval(s, binding, title)
 end
