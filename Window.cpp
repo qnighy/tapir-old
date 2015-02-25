@@ -514,6 +514,7 @@ static VALUE rb_window_padding(VALUE self) {
 static VALUE rb_window_set_padding(VALUE self, VALUE padding) {
   Window *ptr = convertWindow(self);
   ptr->padding = NUM2INT(padding);
+  ptr->padding_bottom = ptr->padding;
   return padding;
 }
 static VALUE rb_window_padding_bottom(VALUE self) {
@@ -531,7 +532,7 @@ static VALUE rb_window_opacity(VALUE self) {
 }
 static VALUE rb_window_set_opacity(VALUE self, VALUE opacity) {
   Window *ptr = convertWindow(self);
-  ptr->opacity = NUM2INT(opacity);
+  ptr->opacity = saturate(NUM2INT(opacity), 0, 255);
   return opacity;
 }
 static VALUE rb_window_back_opacity(VALUE self) {
@@ -540,7 +541,7 @@ static VALUE rb_window_back_opacity(VALUE self) {
 }
 static VALUE rb_window_set_back_opacity(VALUE self, VALUE back_opacity) {
   Window *ptr = convertWindow(self);
-  ptr->back_opacity = NUM2INT(back_opacity);
+  ptr->back_opacity = saturate(NUM2INT(back_opacity), 0, 255);
   return back_opacity;
 }
 static VALUE rb_window_contents_opacity(VALUE self) {
@@ -549,7 +550,7 @@ static VALUE rb_window_contents_opacity(VALUE self) {
 }
 static VALUE rb_window_set_contents_opacity(VALUE self, VALUE contents_opacity) {
   Window *ptr = convertWindow(self);
-  ptr->contents_opacity = NUM2INT(contents_opacity);
+  ptr->contents_opacity = saturate(NUM2INT(contents_opacity), 0, 255);
   return contents_opacity;
 }
 static VALUE rb_window_openness(VALUE self) {
@@ -558,7 +559,7 @@ static VALUE rb_window_openness(VALUE self) {
 }
 static VALUE rb_window_set_openness(VALUE self, VALUE openness) {
   Window *ptr = convertWindow(self);
-  ptr->openness = NUM2INT(openness);
+  ptr->openness = saturate(NUM2INT(openness), 0, 255);
   return openness;
 }
 static VALUE rb_window_tone(VALUE self) {

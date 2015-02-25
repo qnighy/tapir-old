@@ -564,7 +564,7 @@ static VALUE rb_sprite_bush_opacity(VALUE self) {
 }
 static VALUE rb_sprite_set_bush_opacity(VALUE self, VALUE bush_opacity) {
   Sprite *ptr = convertSprite(self);
-  ptr->bush_opacity = NUM2INT(bush_opacity);
+  ptr->bush_opacity = saturate(NUM2INT(bush_opacity), 0, 255);
   return bush_opacity;
 }
 static VALUE rb_sprite_opacity(VALUE self) {
@@ -573,7 +573,7 @@ static VALUE rb_sprite_opacity(VALUE self) {
 }
 static VALUE rb_sprite_set_opacity(VALUE self, VALUE opacity) {
   Sprite *ptr = convertSprite(self);
-  ptr->opacity = NUM2INT(opacity);
+  ptr->opacity = saturate(NUM2INT(opacity), 0, 255);
   return opacity;
 }
 static VALUE rb_sprite_blend_type(VALUE self) {

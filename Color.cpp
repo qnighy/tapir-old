@@ -2,10 +2,10 @@
 #include "misc.h"
 
 void Color::initialize(double red, double green, double blue, double alpha) {
-  this->red = red;
-  this->green = green;
-  this->blue = blue;
-  this->alpha = alpha;
+  this->red = saturate(red, 0.0, 255.0);
+  this->green = saturate(green, 0.0, 255.0);
+  this->blue = saturate(blue, 0.0, 255.0);
+  this->alpha = saturate(alpha, 0.0, 255.0);
 }
 void Color::initialize() {
   this->red = 0.0;
@@ -14,10 +14,10 @@ void Color::initialize() {
   this->alpha = 0.0;
 }
 void Color::set(double red, double green, double blue, double alpha) {
-  this->red = red;
-  this->green = green;
-  this->blue = blue;
-  this->alpha = alpha;
+  this->red = saturate(red, 0.0, 255.0);
+  this->green = saturate(green, 0.0, 255.0);
+  this->blue = saturate(blue, 0.0, 255.0);
+  this->alpha = saturate(alpha, 0.0, 255.0);
 }
 void Color::set(Color *color) {
   this->red = color->red;
@@ -188,7 +188,7 @@ static VALUE rb_color_red(VALUE self) {
 }
 static VALUE rb_color_set_red(VALUE self, VALUE red) {
   Color *ptr = convertColor(self);
-  ptr->red = NUM2DBL(red);
+  ptr->red = saturate(NUM2DBL(red), 0.0, 255.0);
   return red;
 }
 static VALUE rb_color_green(VALUE self) {
@@ -197,7 +197,7 @@ static VALUE rb_color_green(VALUE self) {
 }
 static VALUE rb_color_set_green(VALUE self, VALUE green) {
   Color *ptr = convertColor(self);
-  ptr->green = NUM2DBL(green);
+  ptr->green = saturate(NUM2DBL(green), 0.0, 255.0);
   return green;
 }
 static VALUE rb_color_blue(VALUE self) {
@@ -206,7 +206,7 @@ static VALUE rb_color_blue(VALUE self) {
 }
 static VALUE rb_color_set_blue(VALUE self, VALUE blue) {
   Color *ptr = convertColor(self);
-  ptr->blue = NUM2DBL(blue);
+  ptr->blue = saturate(NUM2DBL(blue), 0.0, 255.0);
   return blue;
 }
 static VALUE rb_color_alpha(VALUE self) {
@@ -215,7 +215,7 @@ static VALUE rb_color_alpha(VALUE self) {
 }
 static VALUE rb_color_set_alpha(VALUE self, VALUE alpha) {
   Color *ptr = convertColor(self);
-  ptr->alpha = NUM2DBL(alpha);
+  ptr->alpha = saturate(NUM2DBL(alpha), 0.0, 255.0);
   return alpha;
 }
 static VALUE rb_color_old_load(VALUE, VALUE str) {
@@ -223,10 +223,10 @@ static VALUE rb_color_old_load(VALUE, VALUE str) {
   Color *ptr = convertColor(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
-  ptr->red = readDouble(s);
-  ptr->green = readDouble(s+8);
-  ptr->blue = readDouble(s+16);
-  ptr->alpha = readDouble(s+24);
+  ptr->red = saturate(readDouble(s), 0.0, 255.0);
+  ptr->green = saturate(readDouble(s+8), 0.0, 255.0);
+  ptr->blue = saturate(readDouble(s+16), 0.0, 255.0);
+  ptr->alpha = saturate(readDouble(s+24), 0.0, 255.0);
   return ret;
 }
 static VALUE rb_color_old_dump(VALUE self, VALUE) {
