@@ -1,3 +1,5 @@
+#include <SDL_ttf.h>
+
 #include "Font.h"
 #include "misc.h"
 
@@ -24,8 +26,9 @@ void Font::set(Font *font) {
   this->out_color->set(font->out_color);
 }
 
-bool Font::exist(VALUE) {
-  return true;
+bool Font::exist(VALUE name) {
+  std::string sname = StringValueCStr(name);
+  return family_names.find(sname) != family_names.end();
 }
 
 VALUE Font::default_name;
@@ -33,6 +36,9 @@ int Font::default_size;
 bool Font::default_bold, Font::default_italic;
 bool Font::default_shadow, Font::default_outline;
 Color *Font::default_color, *Font::default_out_color;
+
+std::map<std::string, std::string> Font::family_names;
+std::map<std::pair<std::string, int>, TTF_Font*> Font::font_caches;
 
 static void font_mark(Font *);
 static VALUE font_alloc(VALUE klass);
@@ -156,14 +162,26 @@ void InitFont() {
 
   Font::default_name = rb_str_new2("VL Gothic");
   rb_gc_register_address(&Font::default_name);
+  Font::default_size = 24;
   Font::default_bold = false;
   Font::default_italic = false;
   Font::default_shadow = false;
   Font::default_outline = true;
-  Font::default_color = Color::create();
-  Font::default_out_color = Color::create();
+  Font::default_color = Color::create(255.0, 255.0, 255.0, 255.0);
+  Font::default_out_color = Color::create(0.0, 0.0, 0.0, 128.0);
   rb_gc_register_address(&Font::default_color->rb_parent);
   rb_gc_register_address(&Font::default_out_color->rb_parent);
+
+  for(std::string fname :
+      {"/home/qnighy/workdir/vxace/RTP/RPGVXAce/Fonts/VL-Gothic-Regular.ttf",
+       "/home/qnighy/workdir/vxace/RTP/RPGVXAce/Fonts/VL-PGothic-Regular.ttf"}
+      ) {
+    TTF_Font *font = TTF_OpenFont(fname.c_str(), 24);
+    Font::family_names[TTF_FontFaceFamilyName(font)] = fname;
+    fprintf(stderr, "Register Font \"%s\" : path %s\n",
+        TTF_FontFaceFamilyName(font),
+        fname.c_str());
+  }
 }
 
 Font *convertFont(VALUE obj) {
@@ -190,6 +208,34 @@ Font *Font::create(VALUE name, int size) {
   Font *ptr = convertFont(ret);
   ptr->initialize(name, size);
   return ptr;
+}
+
+static TTF_Font *retrieveFont(std::string name, int size) {
+  auto iter = Font::font_caches.find(make_pair(name, size));
+  if(iter != Font::font_caches.end()) return iter->second;
+  auto path_iter = Font::family_names.find(name);
+  if(path_iter == Font::family_names.end()) return nullptr;
+  std::string path = path_iter->second;
+  TTF_Font *ret = TTF_OpenFont(path.c_str(), size);
+  if(!ret) return nullptr;
+  Font::font_caches[make_pair(name, size)] = ret;
+  return ret;
+}
+
+TTF_Font *Font::createTTFFont() {
+  TTF_Font *ret = nullptr;
+  if(TYPE(name) == T_ARRAY) {
+    for(long i = 0; i < RARRAY_LEN(name); ++i) {
+      ret = retrieveFont(StringValueCStr(RARRAY_PTR(name)[i]), size);
+      if(ret) break;
+    }
+  } else {
+    ret = retrieveFont(StringValueCStr(name), size);
+  }
+  if(!ret) return nullptr;
+  TTF_SetFontStyle(ret,
+      (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0));
+  return ret;
 }
 
 static void font_mark(Font *ptr) {

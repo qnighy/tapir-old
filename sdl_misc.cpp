@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "sdl_misc.h"
 
@@ -9,6 +11,8 @@ SDL_Renderer *mainWindowRenderer;
 
 void initSDL() {
   SDL_Init(SDL_INIT_EVERYTHING);
+  IMG_Init(IMG_INIT_JPG|IMG_INIT_PNG);
+  TTF_Init();
   mainWindow = SDL_CreateWindow(
       "Hoge", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
       544, 416, SDL_WINDOW_SHOWN);
@@ -46,6 +50,8 @@ void pollEvent() {
 void quitSDL() {
   SDL_DestroyRenderer(mainWindowRenderer);
   SDL_DestroyWindow(mainWindow);
+  TTF_Quit();
+  IMG_Quit();
   SDL_Quit();
   exit(0);
 }

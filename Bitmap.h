@@ -51,6 +51,7 @@ struct Bitmap {
   static Bitmap *create(int width, int height);
 
   SDL_Texture *createTexture(SDL_Renderer *renderer);
+  void invalidateTexture();
 };
 
 extern VALUE rb_cBitmap;

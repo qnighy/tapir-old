@@ -87,17 +87,40 @@ void Bitmap::gradient_fill_rect(
   fprintf(stderr, "TODO: Bitmap::gradient_fill_rect\n");
 }
 void Bitmap::clear() {
-  fprintf(stderr, "TODO: Bitmap::clear\n");
+  invalidateTexture();
+  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+  SDL_RenderFillRect(renderer, NULL);
+  SDL_DestroyRenderer(renderer);
 }
 void Bitmap::clear_rect(int x, int y, int width, int height) {
   fprintf(stderr, "TODO: Bitmap::clear_rect\n");
+  invalidateTexture();
+  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+  SDL_Rect rect;
+  rect.x = x;
+  rect.y = y;
+  rect.w = width;
+  rect.h = height;
+  SDL_RenderFillRect(renderer, &rect);
+  SDL_DestroyRenderer(renderer);
 }
 void Bitmap::clear_rect(Rect *rect) {
-  fprintf(stderr, "TODO: Bitmap::clear_rect\n");
+  clear_rect(rect->x, rect->y, rect->width, rect->height);
 }
 Color *Bitmap::get_pixel(int x, int y) {
-  fprintf(stderr, "TODO: Bitmap::get_pixel\n");
-  return Color::create();
+  SDL_LockSurface(surface);
+  unsigned char *ptr =
+    (unsigned char*)surface->pixels + y * surface->pitch + x * 4;
+  unsigned char red = ptr[0];
+  unsigned char green = ptr[1];
+  unsigned char blue = ptr[2];
+  unsigned char alpha = ptr[3];
+  SDL_UnlockSurface(surface);
+  return Color::create(red, green, blue, alpha);
 }
 void Bitmap::set_pixel(int x, int y, Color *color) {
   fprintf(stderr, "TODO: Bitmap::set_pixel\n");
@@ -113,15 +136,54 @@ void Bitmap::radial_blur(int angle, int division) {
 }
 void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
     int align) {
-  fprintf(stderr, "TODO: Bitmap::draw_text\n");
+  TTF_Font *font = this->font->createTTFFont();
+  if(!font) {
+    fprintf(stderr, "Font Not Found\n");
+    exit(1);
+  }
+  invalidateTexture();
+  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
+  SDL_Color color;
+  color.r = this->font->color->red;
+  color.g = this->font->color->green;
+  color.b = this->font->color->blue;
+  color.a = this->font->color->alpha;
+  SDL_Surface *text_surface = TTF_RenderUTF8_Blended(
+      font, str, color);
+  SDL_Texture *text_texture = SDL_CreateTextureFromSurface(
+      renderer, text_surface);
+  SDL_Rect dst_rect;
+  int w = text_surface->w;
+  if(w >= width) {
+    if(w * 0.6 >= width) {
+      w = w * 0.6;
+    } else {
+      w = width;
+    }
+  }
+  dst_rect.x = x + (width-w)*align/2;
+  dst_rect.y = y + (height-text_surface->h)/2;
+  dst_rect.w = w;
+  dst_rect.h = text_surface->h;
+  SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
+  SDL_RenderCopy(renderer, text_texture, NULL, &dst_rect);
+  SDL_DestroyTexture(text_texture);
+  SDL_FreeSurface(text_surface);
+  SDL_DestroyRenderer(renderer);
 }
 void Bitmap::draw_text(Rect *rect, const char *str,
     int align) {
-  fprintf(stderr, "TODO: Bitmap::draw_text\n");
+  draw_text(rect->x, rect->y, rect->width, rect->height, str, align);
 }
 Rect *Bitmap::text_size(const char *str) {
-  fprintf(stderr, "TODO: Bitmap::text_size\n");
-  return Rect::create();
+  TTF_Font *font = this->font->createTTFFont();
+  if(!font) {
+    fprintf(stderr, "Font Not Found\n");
+    exit(1);
+  }
+  int w, h;
+  TTF_SizeUTF8(font, str, &w, &h);
+  return Rect::create(0, 0, w, h);
 }
 
 SDL_Texture *Bitmap::createTexture(SDL_Renderer *renderer) {
@@ -129,6 +191,12 @@ SDL_Texture *Bitmap::createTexture(SDL_Renderer *renderer) {
     this->texture = SDL_CreateTextureFromSurface(renderer, this->surface);
   }
   return this->texture;
+}
+void Bitmap::invalidateTexture() {
+  if(this->texture) {
+    SDL_DestroyTexture(this->texture);
+    this->texture = nullptr;
+  }
 }
 
 static void bitmap_mark(Bitmap *);

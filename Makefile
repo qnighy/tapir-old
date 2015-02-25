@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-PC_LIBS = ruby-1.9 sdl2 SDL2_image
+PC_LIBS = ruby-1.9 sdl2 SDL2_image SDL2_ttf
 
 CC = g++
 CFLAGS = -std=c11 -O2 -Wall -Wextra -g \
