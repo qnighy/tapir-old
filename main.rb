@@ -24,33 +24,6 @@ class Plane
   def color=(color); @color.set(color); end
   def tone=(tone); @tone.set(tone); end
 end
-class Table
-  def initialize(*args)
-    if 1 <= args.length && args.length <= 3 then
-      @dim = args.length
-      xsize, ysize, zsize = *args, 1, 1
-      @xsize = xsize
-      @ysize = ysize
-      @zsize = zsize
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 1..2)")
-    end
-  end
-  def resize(*args)
-    if 1 <= args.length && args.length <= 3 then
-      @dim = args.length
-      xsize, ysize, zsize = *args, 1, 1
-      @xsize = xsize
-      @ysize = ysize
-      @zsize = zsize
-    else
-      raise ArgumentError.new("wrong number of arguments (#{args.length} for 1..2)")
-    end
-  end
-  def self._load(s)
-    Table.new(0)
-  end
-end
 class Tilemap
   def initialize(viewport = nil)
     @bitmaps = BitmapArray.new
@@ -66,6 +39,7 @@ class Tilemap
   end
   def dispose; @disposed = true; nil; end
   def disposed?; @disposed; end
+  def update; end
   attr_reader :bitmaps
   attr_accessor :map_data, :flash_data, :flags, :viewport, :visible, :ox, :oy
   class BitmapArray
@@ -96,32 +70,6 @@ module Audio
   def self.se_play(filename, volume = 80, pitch = 100); end
   def self.se_stop; end
   def self.se_fade(time); end
-end
-module Graphics
-  def self.wait(duration)
-    duration.times { Graphics.update }
-  end
-  def self.fadeout(duration); Graphics.wait(duration); end
-  def self.fadein(duration); Graphics.wait(duration); end
-  def self.transition(duration = 10, filename = nil, vague = 40)
-    Graphics.wait(duration)
-  end
-  def self.snap_to_bitmap; Bitmap.new(width, height); end
-  def self.frame_reset; end
-  def self.width; @width; end
-  def self.height; @height; end
-  def self.resize_screen(width, height)
-    @width = width
-    @height = height
-  end
-  def self.play_movie(filename); end
-  self.resize_screen(544, 416)
-  class << self
-    attr_accessor :frame_rate, :frame_count, :brightness
-  end
-  @frame_rate = 60
-  @frame_count = 0
-  @brightness = 255
 end
 module Input
   DOWN = :DOWN

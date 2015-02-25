@@ -7,6 +7,7 @@
 #include "Font.h"
 #include "Rect.h"
 #include "Sprite.h"
+#include "Table.h"
 #include "Tone.h"
 #include "Viewport.h"
 #include "Window.h"
@@ -42,6 +43,7 @@ int main(int, char **) {
     InitFont();
     InitRect();
     InitSprite();
+    InitTable();
     InitTone();
     InitViewport();
     InitWindow();

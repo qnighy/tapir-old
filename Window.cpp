@@ -35,14 +35,14 @@ void Window::initialize(int x, int y, int width, int height) {
   this->renderable_entry.y = 0;
   this->renderable_entry.z = this->z;
   this->renderable_entry.renderable_id = current_renderable_id++;
-  register_renderable((Renderable*)this, this->viewport);
+  Graphics::register_renderable((Renderable*)this, this->viewport);
 }
 void Window::initialize() {
   initialize(0, 0, 0, 0);
 }
 void Window::dispose() {
   if(!this->is_disposed) {
-    unregister_renderable((Renderable*)this, this->viewport);
+    Graphics::unregister_renderable((Renderable*)this, this->viewport);
     this->is_disposed = true;
   }
 }
@@ -440,9 +440,9 @@ static VALUE rb_window_viewport(VALUE self) {
 }
 static VALUE rb_window_set_viewport(VALUE self, VALUE viewport) {
   Window *ptr = convertWindow(self);
-  unregister_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::unregister_renderable((Renderable*)ptr, ptr->viewport);
   ptr->viewport = convertViewportOrNil(viewport);
-  register_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::register_renderable((Renderable*)ptr, ptr->viewport);
   return viewport;
 }
 static VALUE rb_window_active(VALUE self) {

@@ -69,8 +69,35 @@ static Sint64 archive_entry_size(SDL_RWops *rwops) {
   ArchiveEntry *entry = (ArchiveEntry*)rwops->hidden.unknown.data1;
   return entry->entry_size;
 }
-static Sint64 archive_entry_seek(SDL_RWops *, Sint64, int) {
-  return SDL_SetError("Can't seek RGSSAD3 entry");
+static Sint64 archive_entry_seek(
+    SDL_RWops *rwops, Sint64 offset, int whence) {
+  ArchiveEntry *entry = (ArchiveEntry*)rwops->hidden.unknown.data1;
+  uint32_t newpos;
+  if(whence == RW_SEEK_SET) {
+    newpos = offset;
+  } else if(whence == RW_SEEK_CUR) {
+    newpos = entry->iopos + offset;
+  } else if(whence == RW_SEEK_END) {
+    newpos = entry->entry_size + offset;
+  } else {
+    return SDL_SetError("Invalid whence field in seek");
+  }
+  if(!(0 <= newpos && newpos <= entry->entry_size)) {
+    return SDL_SetError("seek position out-of-range");
+  }
+  while(newpos > entry->iopos) {
+    if((entry->iopos&3)==3) {
+      entry->key = entry->key * 7u + 3u;
+    }
+    ++entry->iopos;
+  }
+  while(newpos < entry->iopos) {
+    if((entry->iopos&3)==0) {
+      entry->key = (entry->key - 3u) * 3067833783u;
+    }
+    --entry->iopos;
+  }
+  return newpos;
 }
 static size_t archive_entry_read(
     SDL_RWops *rwops, void *ptr, size_t size, size_t num) {

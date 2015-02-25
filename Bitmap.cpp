@@ -17,8 +17,12 @@ void Bitmap::initialize(const char *filename) {
     SDL_Quit();
     exit(1);
   }
-  fprintf(stderr, "loaded %s.png\n", filename);
+  // fprintf(stderr, "loaded %s.png\n", filename);
   this->surface = IMG_Load_RW(rwops, true);
+  if(!this->surface) {
+    fprintf(stderr, "Couldn't load image: %s\n", SDL_GetError());
+    exit(1);
+  }
   this->font = Font::create();
   this->texture = nullptr;
 }
@@ -71,10 +75,21 @@ void Bitmap::stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
   fprintf(stderr, "TODO: Bitmap::stretch_blt\n");
 }
 void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
-  fprintf(stderr, "TODO: Bitmap::fill_rect\n");
+  invalidateTexture();
+  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+  SDL_SetRenderDrawColor(
+      renderer, color->red, color->green, color->blue, color->alpha);
+  SDL_Rect rect;
+  rect.x = x;
+  rect.y = y;
+  rect.w = width;
+  rect.h = height;
+  SDL_RenderFillRect(renderer, &rect);
+  SDL_DestroyRenderer(renderer);
 }
 void Bitmap::fill_rect(Rect *rect, Color *color) {
-  fprintf(stderr, "TODO: Bitmap::fill_rect\n");
+  fill_rect(rect->x, rect->y, rect->width, rect->height, color);
 }
 void Bitmap::gradient_fill_rect(
     int x, int y, int width, int height, Color *color1, Color *color2,
@@ -95,7 +110,6 @@ void Bitmap::clear() {
   SDL_DestroyRenderer(renderer);
 }
 void Bitmap::clear_rect(int x, int y, int width, int height) {
-  fprintf(stderr, "TODO: Bitmap::clear_rect\n");
   invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
@@ -162,8 +176,6 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   color.g = this->font->color->green;
   color.b = this->font->color->blue;
   color.a = this->font->color->alpha;
-  fprintf(stderr, "color = (%d, %d, %d, %d)\n",
-      color.r, color.g, color.b, color.a);
   SDL_Surface *text_surface = TTF_RenderUTF8_Blended(
       font, str, color);
   SDL_Texture *text_texture = SDL_CreateTextureFromSurface(
@@ -535,24 +547,29 @@ static VALUE rb_bitmap_radial_blur(VALUE self, VALUE angle, VALUE division) {
 }
 static VALUE rb_bitmap_draw_text(int argc, VALUE *argv, VALUE self) {
   Bitmap *ptr = convertBitmap(self);
+  VALUE str;
   switch(argc) {
     case 6:
+      str = rb_check_convert_type(argv[4], T_STRING, "String", "to_s");
       ptr->draw_text(
           NUM2INT(argv[0]), NUM2INT(argv[1]), NUM2INT(argv[2]),
-          NUM2INT(argv[3]), StringValueCStr(argv[4]), NUM2INT(argv[5]));
+          NUM2INT(argv[3]), StringValueCStr(str), NUM2INT(argv[5]));
       break;
     case 5:
+      str = rb_check_convert_type(argv[4], T_STRING, "String", "to_s");
       ptr->draw_text(
           NUM2INT(argv[0]), NUM2INT(argv[1]), NUM2INT(argv[2]),
-          NUM2INT(argv[3]), StringValueCStr(argv[4]));
+          NUM2INT(argv[3]), StringValueCStr(str));
       break;
     case 3:
+      str = rb_check_convert_type(argv[1], T_STRING, "String", "to_s");
       ptr->draw_text(
-          convertRect(argv[0]), StringValueCStr(argv[1]), NUM2INT(argv[2]));
+          convertRect(argv[0]), StringValueCStr(str), NUM2INT(argv[2]));
       break;
     case 2:
+      str = rb_check_convert_type(argv[1], T_STRING, "String", "to_s");
       ptr->draw_text(
-          convertRect(argv[0]), StringValueCStr(argv[1]));
+          convertRect(argv[0]), StringValueCStr(str));
       break;
     default:
       rb_raise(rb_eArgError,
@@ -563,7 +580,8 @@ static VALUE rb_bitmap_draw_text(int argc, VALUE *argv, VALUE self) {
 }
 static VALUE rb_bitmap_text_size(VALUE self, VALUE str) {
   Bitmap *ptr = convertBitmap(self);
-  return exportRect(ptr->text_size(StringValueCStr(str)));
+  VALUE str2 = rb_check_convert_type(str, T_STRING, "String", "to_s");
+  return exportRect(ptr->text_size(StringValueCStr(str2)));
 }
 
 static VALUE rb_bitmap_font(VALUE self) {

@@ -21,19 +21,19 @@ void Viewport::initialize(int x, int y, int width, int height) {
   this->renderable_entry.z = this->z;
   this->renderable_entry.renderable_id = current_renderable_id++;
   this->renderables = new std::vector<Renderable*>();
-  register_renderable((Renderable*)this, nullptr);
+  Graphics::register_renderable((Renderable*)this, nullptr);
 }
 void Viewport::initialize(Rect *rect) {
   initialize(rect->x, rect->y, rect->width, rect->height);
 }
 void Viewport::initialize() {
   // TODO
-  initialize(0, 0, 544, 416);
+  initialize(0, 0, Graphics::width, Graphics::height);
 }
 void Viewport::dispose() {
   if(!this->is_disposed) {
     this->is_disposed = true;
-    unregister_renderable((Renderable*)this, nullptr);
+    Graphics::unregister_renderable((Renderable*)this, nullptr);
   }
 }
 bool Viewport::disposed() {

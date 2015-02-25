@@ -36,11 +36,11 @@ void Sprite::initialize(Viewport *viewport) {
   this->renderable_entry.y = this->y;
   this->renderable_entry.z = this->z;
   this->renderable_entry.renderable_id = current_renderable_id++;
-  register_renderable((Renderable*)this, this->viewport);
+  Graphics::register_renderable((Renderable*)this, this->viewport);
 }
 void Sprite::dispose() {
   if(!this->is_disposed) {
-    unregister_renderable((Renderable*)this, this->viewport);
+    Graphics::unregister_renderable((Renderable*)this, this->viewport);
     this->is_disposed = true;
   }
 }
@@ -398,7 +398,7 @@ static VALUE rb_sprite_bitmap(VALUE self) {
 static VALUE rb_sprite_set_bitmap(VALUE self, VALUE bitmap) {
   Sprite *ptr = convertSprite(self);
   ptr->bitmap = convertBitmapOrNil(bitmap);
-  ptr->src_rect->set(ptr->bitmap->rect());
+  if(ptr->bitmap) ptr->src_rect->set(ptr->bitmap->rect());
   return bitmap;
 }
 static VALUE rb_sprite_src_rect(VALUE self) {
@@ -416,9 +416,9 @@ static VALUE rb_sprite_viewport(VALUE self) {
 }
 static VALUE rb_sprite_set_viewport(VALUE self, VALUE viewport) {
   Sprite *ptr = convertSprite(self);
-  unregister_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::unregister_renderable((Renderable*)ptr, ptr->viewport);
   ptr->viewport = convertViewportOrNil(viewport);
-  register_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::register_renderable((Renderable*)ptr, ptr->viewport);
   return viewport;
 }
 static VALUE rb_sprite_visible(VALUE self) {
