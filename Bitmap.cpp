@@ -4,16 +4,16 @@
 
 #include "Bitmap.h"
 #include "misc.h"
+#include "file_misc.h"
 
 void Bitmap::initialize(const char *filename) {
   SDL_RWops *rwops;
-  rwops = SDL_RWFromFile(
-      (std::string(filename)+".png").c_str(), "rb");
-  if(rwops == nullptr)
-  rwops = SDL_RWFromFile(
-      ("/home/qnighy/workdir/vxace/RTP/RPGVXAce/"+std::string(filename)+".png").c_str(), "rb");
+  rwops = openPath(filename);
+  if(!rwops) rwops = openPath(std::string(filename)+".png");
+  if(!rwops) rwops = openPath(std::string(filename)+".jpg");
+  if(!rwops) rwops = openPath(std::string(filename)+".bmp");
   if(rwops == nullptr) {
-    fprintf(stderr, "%s.png not found\n", filename);
+    fprintf(stderr, "image %s not found\n", filename);
     SDL_Quit();
     exit(1);
   }

@@ -1,15 +1,5 @@
 require "zlib"
 
-def saturate(num, minval, maxval)
-  if num <= minval then
-    minval
-  elsif num >= maxval then
-    maxval
-  else
-    num
-  end
-end
-
 class Plane
   def initialize(viewport = nil)
     @bitmap = nil

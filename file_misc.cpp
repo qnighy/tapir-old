@@ -124,6 +124,10 @@ SDL_RWops *openPath(std::string path) {
     ret->hidden.unknown.data1 = entry;
     return ret;
   }
+  SDL_RWops *rwops = SDL_RWFromFile(path.c_str(), "rb");
+  if(rwops) return rwops;
+  rwops = SDL_RWFromFile((rtp_path+("/"+path)).c_str(), "rb");
+  if(rwops) return rwops;
   return nullptr;
 }
 
