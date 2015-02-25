@@ -47,6 +47,17 @@ void Viewport::update() {
 }
 
 void Viewport::render(SDL_Renderer *renderer) {
+  SDL_Rect vp_rect;
+  vp_rect.x = rect->x;
+  vp_rect.y = rect->y;
+  vp_rect.w = rect->width;
+  vp_rect.h = rect->height;
+  SDL_RenderSetViewport(renderer, &vp_rect);
+  Graphics::sort_renderables(renderables);
+  for(Renderable *r : *renderables) {
+    Graphics::render_renderable(r, renderer);
+  }
+  SDL_RenderSetViewport(renderer, NULL);
 }
 
 static void viewport_mark(Viewport *);
