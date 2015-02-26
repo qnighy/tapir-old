@@ -5,6 +5,7 @@
 #include <SDL_ttf.h>
 
 #include "sdl_misc.h"
+#include "RGSSReset.h"
 
 SDL_Window *mainWindow;
 SDL_Renderer *mainWindowRenderer;
@@ -28,12 +29,14 @@ void pollEvent() {
         quitSDL();
         break;
       case SDL_KEYDOWN:
+        if(e.key.keysym.scancode == SDL_SCANCODE_F12) {
+          rb_raise(rb_eRGSSReset, "F12 pressed");
+        }
+        break;
       case SDL_KEYUP:
-        // fprintf(stderr, "TODO: key\n");
-        break;
       case SDL_WINDOWEVENT:
-        // fprintf(stderr, "TODO: window event\n");
-        break;
+      case SDL_TEXTEDITING:
+      case SDL_TEXTINPUT:
       case SDL_MOUSEMOTION:
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:

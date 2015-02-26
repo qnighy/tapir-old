@@ -51,7 +51,6 @@ class Tilemap
   end
 end
 class RGSSError < StandardError; end
-class RGSSReset < Exception; end
 
 module Audio
   def self.setup_midi; end
