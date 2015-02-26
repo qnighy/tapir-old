@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -8,8 +10,8 @@
 
 #include "file_misc.h"
 
-const char *game_path = "/home/qnighy/workdir/vxace/SakusakuEnc/";
-const char *rtp_path = "/home/qnighy/workdir/vxace/RTP/RPGVXAce/";
+const char *game_path = "/home/qnighy/workdir/vxace/SakusakuEnc";
+const char *rtp_path = "/home/qnighy/workdir/vxace/RTP/RPGVXAce";
 
 struct ArchiveEntry {
   uint32_t key;
@@ -20,7 +22,7 @@ struct ArchiveEntry {
 
 static SDL_RWops *archive;
 static uint32_t archive_key;
-std::map<std::string, ArchiveEntry> archive_entries;
+static std::map<std::string, ArchiveEntry> archive_entries;
 
 static VALUE rb_load_data(VALUE self, VALUE path);
 
@@ -127,6 +129,9 @@ static int archive_entry_close(SDL_RWops *rwops) {
   return 0;
 }
 
+static SDL_RWops *openFileCaseInsensitiveTweak(
+    std::string base, std::string path);
+
 SDL_RWops *openPath(std::string path) {
   for(char &c : path) {
     if(c == '\\') {
@@ -152,10 +157,14 @@ SDL_RWops *openPath(std::string path) {
   if(rwops) return rwops;
   rwops = SDL_RWFromFile((rtp_path+("/"+path)).c_str(), "rb");
   if(rwops) return rwops;
+  rwops = openFileCaseInsensitiveTweak(".", path);
+  if(rwops) return rwops;
+  rwops = openFileCaseInsensitiveTweak(rtp_path, path);
+  if(rwops) return rwops;
   return nullptr;
 }
 
-static VALUE rb_load_data(VALUE self, VALUE path) {
+static VALUE rb_load_data(VALUE, VALUE path) {
   SDL_RWops *rwops = openPath(StringValueCStr(path));
   if(!rwops) return Qnil;
 
@@ -171,4 +180,50 @@ static VALUE rb_load_data(VALUE self, VALUE path) {
         rb_intern("const_get"), 1,
         ID2SYM(rb_intern("Marshal")));
   return rb_funcall(rb_mMarshal, rb_intern("load"), 1, str);
+}
+
+static char lower(char ch) {
+  if('A' <= ch && ch <= 'Z') return ch - 'A' + 'a';
+  return ch;
+}
+
+static SDL_RWops *openFileCaseInsensitiveTweak(
+    std::string base, std::string path) {
+  int pathpos = 0;
+  while((size_t)pathpos < path.size()) {
+    int nextpos = path.find('/', pathpos);
+    if(nextpos == -1) nextpos = path.size();
+    std::string pathelem(path, pathpos, nextpos-pathpos);
+    DIR *dir = opendir(base.c_str());
+    if(!dir) return nullptr;
+    bool found = false;
+    dirent *dent;
+    while((dent = readdir(dir)) != nullptr) {
+      bool eql = true;
+      int i;
+      for(i = 0; dent->d_name[i]; ++i) {
+        if((size_t)i >= pathelem.size()) {
+          eql = false;
+          break;
+        }
+        if(lower(dent->d_name[i]) != lower(pathelem[i])) {
+          eql = false;
+          break;
+        }
+      }
+      if(pathelem.size() != (size_t)i) eql = false;
+      if(eql) {
+        pathelem = dent->d_name;
+        found = true;
+        break;
+      }
+    }
+    closedir(dir);
+    if(!found) return nullptr;
+    base.push_back('/');
+    base.append(pathelem);
+    pathpos = nextpos + 1;
+  }
+  SDL_RWops *rwops = SDL_RWFromFile(base.c_str(), "rb");
+  return rwops;
 }
