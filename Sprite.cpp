@@ -63,16 +63,23 @@ int Sprite::height() {
 void Sprite::render(SDL_Renderer *renderer) {
   if(!this->visible || !this->bitmap) return;
   // fprintf(stderr, "render!\n");
+  SDL_Rect src_rect_orig;
+  src_rect_orig.x = this->src_rect->x;
+  src_rect_orig.y = this->src_rect->y;
+  src_rect_orig.w = this->src_rect->width;
+  src_rect_orig.h = this->src_rect->height;
+  SDL_Rect img_rect;
+  img_rect.x = 0;
+  img_rect.y = 0;
+  img_rect.w = this->bitmap->surface->w;
+  img_rect.h = this->bitmap->surface->h;
   SDL_Rect src_rect;
-  src_rect.x = this->src_rect->x;
-  src_rect.y = this->src_rect->y;
-  src_rect.w = this->src_rect->width;
-  src_rect.h = this->src_rect->height;
+  SDL_IntersectRect(&src_rect_orig, &img_rect, &src_rect);
   SDL_Rect dst_rect;
   dst_rect.x = x-ox*zoom_x;
   dst_rect.y = y-oy*zoom_y;
-  dst_rect.w = this->src_rect->width*zoom_x;
-  dst_rect.h = this->src_rect->height*zoom_y;
+  dst_rect.w = src_rect.w*zoom_x;
+  dst_rect.h = src_rect.h*zoom_y;
   SDL_Texture *texture = this->bitmap->createTexture(renderer);
   SDL_SetTextureAlphaMod(texture, opacity);
   if(blend_type == 1) {
@@ -83,14 +90,8 @@ void Sprite::render(SDL_Renderer *renderer) {
   } else {
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
   }
-  if(angle != 0.0) {
-    fprintf(stderr, "TODO: Sprite::render: angle\n");
-  }
   if(wave_amp != 0) {
     fprintf(stderr, "TODO: Sprite::render: wave\n");
-  }
-  if(mirror) {
-    fprintf(stderr, "TODO: Sprite::render: mirror\n");
   }
   if(bush_depth != 0) {
     fprintf(stderr, "TODO: Sprite::render: bush_depth\n");
@@ -102,7 +103,14 @@ void Sprite::render(SDL_Renderer *renderer) {
       tone->blue != 0.0 || tone->gray != 0.0) {
     // fprintf(stderr, "TODO: Sprite::render: tone\n");
   }
-  SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+  // fprintf(stderr, "(%d,%d,%d,%d)->(%d,%d,%d,%d)\n",
+  //     src_rect.x, src_rect.y, src_rect.x+src_rect.w, src_rect.y+src_rect.h,
+  //     dst_rect.x, dst_rect.y, dst_rect.x+dst_rect.w, dst_rect.y+dst_rect.h);
+  SDL_Point center;
+  center.x = this->src_rect->x + ox;
+  center.y = this->src_rect->y + oy;
+  SDL_RenderCopyEx(renderer, texture, &src_rect, &dst_rect,
+      angle, &center, mirror ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
 }
 
 static void sprite_mark(Sprite *);

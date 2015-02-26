@@ -69,23 +69,26 @@ void Window::render(SDL_Renderer *renderer) {
   if(!this->visible) return;
   // TODO: Window::render
   // fprintf(stderr, "render!\n");
-  int x = this->x;
-  int y = this->y + this->height*(255-this->openness)/510;
-  int width = this->width;
-  int height = this->height*this->openness/255;
-  if(width <= 4 || height <= 4) return;
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-  SDL_SetRenderDrawColor(renderer, 0, 0, 255, this->back_opacity);
-  SDL_Rect rect;
-  rect.x = x+2;
-  rect.y = y+2;
-  rect.w = width-4;
-  rect.h = height-4;
-  SDL_RenderFillRect(renderer, &rect);
-  if(tone->red != 0.0 || tone->green != 0.0 ||
-      tone->blue != 0.0 || tone->gray != 0.0) {
-    // fprintf(stderr, "TODO: Window::render: tone\n");
+  if(this->windowskin && this->windowskin->surface) {
+    int x = this->x;
+    int y = this->y + this->height*(255-this->openness)/510;
+    int width = this->width;
+    int height = this->height*this->openness/255;
+    if(width <= 4 || height <= 4) return;
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, this->back_opacity);
+    SDL_Rect rect;
+    rect.x = x+2;
+    rect.y = y+2;
+    rect.w = width-4;
+    rect.h = height-4;
+    SDL_RenderFillRect(renderer, &rect);
+    if(tone->red != 0.0 || tone->green != 0.0 ||
+        tone->blue != 0.0 || tone->gray != 0.0) {
+      // fprintf(stderr, "TODO: Window::render: tone\n");
+    }
   }
+
   if(openness != 255) return;
 
   {
@@ -99,16 +102,23 @@ void Window::render(SDL_Renderer *renderer) {
     SDL_RenderFillRect(renderer, &cursor_rect);
   }
 
+  SDL_Rect src_rect_orig;
+  src_rect_orig.x = ox;
+  src_rect_orig.y = oy;
+  src_rect_orig.w = width-padding-padding;
+  src_rect_orig.h = height-padding-padding_bottom;
+  SDL_Rect img_rect;
+  img_rect.x = 0;
+  img_rect.y = 0;
+  img_rect.w = this->contents->surface->w;
+  img_rect.h = this->contents->surface->h;
   SDL_Rect src_rect;
-  src_rect.x = ox;
-  src_rect.y = oy;
-  src_rect.w = width-padding-padding;
-  src_rect.h = height-padding-padding_bottom;
+  SDL_IntersectRect(&src_rect_orig, &img_rect, &src_rect);
   SDL_Rect dst_rect;
-  dst_rect.x = x+padding;
-  dst_rect.y = y+padding;
-  dst_rect.w = width-padding-padding;
-  dst_rect.h = height-padding-padding_bottom;
+  dst_rect.x = x+padding-ox+src_rect.x;
+  dst_rect.y = y+padding-oy+src_rect.y;
+  dst_rect.w = src_rect.w;
+  dst_rect.h = src_rect.h;
   SDL_Texture *texture = this->contents->createTexture(renderer);
   SDL_SetTextureAlphaMod(texture, contents_opacity);
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
