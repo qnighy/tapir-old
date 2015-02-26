@@ -12,18 +12,23 @@ LDFLAGS = $(shell pkg-config $(PC_LIBS) --libs-only-L --libs-only-other)
 LDLIBS = $(shell pkg-config $(PC_LIBS) --libs-only-l)
 
 EXEC = main
-# OBJS = main.o \
-#        Bitmap.o Color.o Font.o Plane.o Rect.o Sprite.o \
-#        Table.o Tilemap.o Tone.o Viewport.o Window.o
 OBJS = main.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
        Bitmap.o Color.o Font.o Rect.o Sprite.o \
        Table.o Tone.o Viewport.o \
        Window.o Graphics.o Input.o
 
+.PHONY: all clean run run-valgrind
+
 all: $(EXEC)
 
 clean:
 	$(RM) $(EXEC) $(OBJS) $(wildcard *.d)
+
+run: all
+	./$(EXEC)
+
+run-valgrind: all
+	valgrind --undef-value-errors=no ./$(EXEC)
 
 main: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
