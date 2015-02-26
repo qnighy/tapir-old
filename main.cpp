@@ -8,6 +8,7 @@
 #include "Rect.h"
 #include "Sprite.h"
 #include "Table.h"
+#include "Tilemap.h"
 #include "Tone.h"
 #include "Viewport.h"
 #include "Window.h"
@@ -45,6 +46,7 @@ int main(int, char **) {
     InitRect();
     InitSprite();
     InitTable();
+    InitTilemap();
     InitTone();
     InitViewport();
     InitWindow();

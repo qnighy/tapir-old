@@ -4,6 +4,7 @@
 #include <SDL.h>
 
 #include "Sprite.h"
+#include "Tilemap.h"
 #include "Viewport.h"
 #include "Window.h"
 #include "Graphics.h"
@@ -38,6 +39,9 @@ void Graphics::render_renderable(Renderable *r, SDL_Renderer *renderer) {
       break;
     case RenderableType::WINDOW:
       ((Window*)r)->render(renderer);
+      break;
+    case RenderableType::TILEMAP:
+      ((Tilemap*)r)->render(renderer);
       break;
     default:
       break;

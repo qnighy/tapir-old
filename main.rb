@@ -24,32 +24,6 @@ class Plane
   def color=(color); @color.set(color); end
   def tone=(tone); @tone.set(tone); end
 end
-class Tilemap
-  def initialize(viewport = nil)
-    @bitmaps = BitmapArray.new
-    @map_data = nil
-    @flash_data = nil
-    @flags = nil
-    @viewport = viewport
-    @visible = true
-    @ox = 0
-    @oy = 0
-
-    @disposed = false
-  end
-  def dispose; @disposed = true; nil; end
-  def disposed?; @disposed; end
-  def update; end
-  attr_reader :bitmaps
-  attr_accessor :map_data, :flash_data, :flags, :viewport, :visible, :ox, :oy
-  class BitmapArray
-    def initialize
-      @val = Array.new(9, nil)
-    end
-    def [](i); @val[i]; end
-    def []=(i,x); @val[i] = x; end
-  end
-end
 class RGSSError < StandardError; end
 
 module Audio
