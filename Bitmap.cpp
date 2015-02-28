@@ -5,6 +5,7 @@
 #include "Bitmap.h"
 #include "misc.h"
 #include "file_misc.h"
+#include "sdl_misc.h"
 
 void Bitmap::initialize(const char *filename) {
   SDL_RWops *rwops;

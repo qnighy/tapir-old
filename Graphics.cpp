@@ -2,6 +2,7 @@
 
 #include <ruby.h>
 #include <SDL.h>
+#include <SDL_timer.h>
 
 #include "Sprite.h"
 #include "Tilemap.h"
@@ -54,6 +55,9 @@ int Graphics::frame_rate;
 int Graphics::frame_count;
 int Graphics::brightness;
 
+int Graphics::periodic_count;
+Uint64 Graphics::periodic_last;
+
 VALUE rb_mGraphics;
 
 void InitGraphics() {
@@ -65,6 +69,9 @@ void InitGraphics() {
   Graphics::frame_rate = 60;
   Graphics::frame_count = 0;
   Graphics::brightness = 255;
+
+  Graphics::periodic_count = 0;
+  Graphics::periodic_last = SDL_GetPerformanceCounter();
 
   rb_mGraphics = rb_define_module("Graphics");
   rb_define_singleton_method(rb_mGraphics, "update",
@@ -103,7 +110,20 @@ void InitGraphics() {
       (VALUE(*)(...))rb_graphics_set_brightness, 1);
 }
 
+static Uint64 internal_last;
+static Uint64 update_counter() {
+  Uint64 internal_current = SDL_GetPerformanceCounter();
+  Uint64 ret = internal_current - internal_last;
+  internal_last = internal_current;
+  return ret;
+}
+
+static int internal_counter = 0;
+static Uint64 time1 = 0;
+static Uint64 time2 = 0;
+static Uint64 time3 = 0;
 VALUE rb_graphics_update(VALUE) {
+  time1 += update_counter();
   pollEvent();
   ++Graphics::frame_count;
   SDL_SetRenderDrawBlendMode(mainWindowRenderer, SDL_BLENDMODE_NONE);
@@ -114,7 +134,34 @@ VALUE rb_graphics_update(VALUE) {
     Graphics::render_renderable(r, mainWindowRenderer);
   }
   SDL_RenderPresent(mainWindowRenderer);
-  SDL_Delay(1000/Graphics::frame_rate);
+  time2 += update_counter();
+  {
+    ++Graphics::periodic_count;
+    Uint64 freq = SDL_GetPerformanceFrequency();
+    Uint64 elapsed = SDL_GetPerformanceCounter() - Graphics::periodic_last;
+    Uint64 desired = freq * Graphics::periodic_count / Graphics::frame_rate;
+    if(desired > elapsed) {
+      SDL_Delay((desired-elapsed)*1000/freq);
+    }
+    if(Graphics::periodic_count >= Graphics::frame_rate) {
+      Graphics::periodic_count -= Graphics::frame_rate;
+      Graphics::periodic_last += freq;
+    }
+  }
+  time3 += update_counter();
+  if(internal_counter%100==0) {
+    Uint64 freq = SDL_GetPerformanceFrequency();
+    printf("ruby: %gms, render: %gms, wait: %gms, %gfps\n",
+        time1*0.01/freq*1000,
+        time2*0.01/freq*1000,
+        time3*0.01/freq*1000,
+        freq/((time1+time2+time3)*0.01));
+    internal_counter = 0;
+    time1 = 0;
+    time2 = 0;
+    time3 = 0;
+  }
+  ++internal_counter;
   return Qnil;
 }
 VALUE rb_graphics_wait(VALUE self, VALUE duration) {
@@ -166,6 +213,9 @@ VALUE rb_graphics_snap_to_bitmap(VALUE) {
 }
 VALUE rb_graphics_frame_reset(VALUE) {
   fprintf(stderr, "TODO: Graphics::frame_reset\n");
+
+  Graphics::periodic_count = 0;
+  Graphics::periodic_last = SDL_GetPerformanceCounter();
 }
 VALUE rb_graphics_width(VALUE) {
   return INT2NUM(Graphics::width);
@@ -174,12 +224,12 @@ VALUE rb_graphics_height(VALUE) {
   return INT2NUM(Graphics::height);
 }
 VALUE rb_graphics_resize_screen(VALUE, VALUE width, VALUE height) {
+  // TODO: Graphics::resize_screen: check correctness
   Graphics::width = NUM2INT(width);
   Graphics::height = NUM2INT(height);
-  SDL_DestroyRenderer(mainWindowRenderer);
   SDL_SetWindowSize(mainWindow, Graphics::width, Graphics::height);
-  mainWindowRenderer = SDL_CreateRenderer(mainWindow, -1,
-      SDL_RENDERER_ACCELERATED);
+  // SDL_RenderSetLogicalSize(
+  //     mainWindowRenderer, Graphics::width, Graphics::height);
 }
 VALUE rb_graphics_play_movie(VALUE, VALUE filename) {
   fprintf(stderr, "TODO: Graphics::play_movie\n");
@@ -189,6 +239,8 @@ VALUE rb_graphics_frame_rate(VALUE) {
 }
 VALUE rb_graphics_set_frame_rate(VALUE, VALUE frame_rate) {
   Graphics::frame_rate = saturate(NUM2INT(frame_rate), 10, 120);
+  Graphics::periodic_count = 0;
+  Graphics::periodic_last = SDL_GetPerformanceCounter();
   return frame_rate;
 }
 VALUE rb_graphics_frame_count(VALUE) {

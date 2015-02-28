@@ -2,6 +2,7 @@
 #define GRAPHICS_H_INCLUDED
 
 #include <ruby.h>
+#include <SDL.h>
 
 #include "renderable.h"
 #include "Viewport.h"
@@ -9,6 +10,9 @@
 struct Graphics {
   static int width, height;
   static int frame_rate, frame_count, brightness;
+
+  static int periodic_count;
+  static Uint64 periodic_last;
 
   static void register_renderable(Renderable *r, Viewport *v);
   static void unregister_renderable(Renderable *r, Viewport *v);

@@ -41,9 +41,58 @@ void Tilemap::update() {
 }
 
 void Tilemap::render(SDL_Renderer *renderer) {
-  if(!this->visible) return;
+  if(!this->visible || !this->map_data) return;
+  int ysize = this->map_data->ysize;
+  int xsize = this->map_data->xsize;
+  if(ysize == 0 || xsize == 0) return;
+  int syi = oy/32;
+  int sxi = ox/32;
+  int eyi = (oy+Graphics::height)/32+1;
+  int exi = (ox+Graphics::width)/32+1;
+  // return;
   // fprintf(stderr, "render!\n");
   // TODO: Tilemap::render
+  for(int zi = 0; zi < 3; ++zi) {
+    for(int yi = syi; yi < eyi; ++yi) {
+      for(int xi = sxi; xi < exi; ++xi) {
+        int yii = yi%ysize;
+        if(yii<0) yii+=ysize;
+        int xii = xi%xsize;
+        if(xii<0) xii+=xsize;
+        {
+          SDL_Rect dst_rect;
+          dst_rect.x = xi*32-ox;
+          dst_rect.y = yi*32-oy;
+          dst_rect.w = 32;
+          dst_rect.h = 32;
+          SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+          SDL_RenderDrawRect(renderer, &dst_rect);
+        }
+        // int tileid = this->map_data->get(xii, yii, zi);
+        // if(0x0001 <= tileid && tileid < 0x0400) {
+        int tileid = 0;
+        if(0x0000 <= tileid && tileid < 0x0400) {
+          int bitmapid = 5 + ((tileid>>8)&3);
+          SDL_Rect src_rect;
+          src_rect.x = ((tileid&7)|((tileid>>4)&8))*32;
+          src_rect.y = ((tileid>>3)&15)*32;
+          src_rect.w = 32;
+          src_rect.h = 32;
+          SDL_Rect dst_rect;
+          dst_rect.x = xi*32-ox;
+          dst_rect.y = yi*32-oy;
+          dst_rect.w = 32;
+          dst_rect.h = 32;
+          if(!this->bitmaps[bitmapid]) continue;
+          SDL_Texture *texture =
+            this->bitmaps[bitmapid]->createTexture(renderer);
+          SDL_SetTextureAlphaMod(texture, 255);
+          SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+          SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+        }
+      }
+    }
+  }
 }
 
 static void tilemap_mark(Tilemap *);
