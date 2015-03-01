@@ -30,6 +30,26 @@ void Graphics::sort_renderables(std::vector<Renderable*> *rs) {
       return a->renderable_id < b->renderable_id;
   });
 }
+void Graphics::force_unregister_renderable(Renderable *r) {
+  switch(r->type) {
+    case RenderableType::SPRITE:
+      ((Sprite*)r)->viewport = nullptr;
+      break;
+    case RenderableType::VIEWPORT:
+      break;
+    case RenderableType::WINDOW:
+      ((Window*)r)->viewport = nullptr;
+      break;
+    case RenderableType::TILEMAP:
+      ((Tilemap*)r)->viewport = nullptr;
+      break;
+    case RenderableType::TILEMAP_SUB:
+      ((TilemapSub*)r)->parent->viewport = nullptr;
+      break;
+    default:
+      break;
+  }
+}
 void Graphics::render_renderable(
     Renderable *r, SDL_Renderer *renderer,
     int rox, int roy, int rwidth, int rheight) {
@@ -152,6 +172,11 @@ VALUE rb_graphics_update(VALUE) {
     Uint64 desired = freq * Graphics::periodic_count / Graphics::frame_rate;
     if(desired > elapsed) {
       SDL_Delay((desired-elapsed)*1000/freq);
+    } else {
+      Uint64 d = elapsed - desired - freq*5/Graphics::frame_rate;
+      if((Sint64)d > 0) {
+        Graphics::periodic_last += d/3;
+      }
     }
     if(Graphics::periodic_count >= Graphics::frame_rate) {
       Graphics::periodic_count -= Graphics::frame_rate;
@@ -224,8 +249,6 @@ VALUE rb_graphics_snap_to_bitmap(VALUE) {
   return exportBitmap(Bitmap::create(Graphics::width, Graphics::height));
 }
 VALUE rb_graphics_frame_reset(VALUE) {
-  fprintf(stderr, "TODO: Graphics::frame_reset\n");
-
   Graphics::periodic_count = 0;
   Graphics::periodic_last = SDL_GetPerformanceCounter();
 }

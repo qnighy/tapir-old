@@ -16,6 +16,7 @@ struct Graphics {
 
   static void register_renderable(Renderable *r, Viewport *v);
   static void unregister_renderable(Renderable *r, Viewport *v);
+  static void force_unregister_renderable(Renderable *r);
 
   static void sort_renderables(std::vector<Renderable*> *rs);
   static void render_renderable(

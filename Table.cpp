@@ -154,6 +154,7 @@ static void table_free(Table *ptr) {
 
 static VALUE table_alloc(VALUE klass) {
   Table *ptr = ALLOC(Table);
+  ptr->data = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, table_mark, table_free, ptr);
   ptr->rb_parent = ret;
   return ret;
@@ -204,11 +205,13 @@ static VALUE rb_table_resize(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_table_get(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   if(argc == ptr->dim) {
-    short ret = ptr->get_internal(
-        argc,
-        0 < argc ? NUM2INT(argv[0]) : 0,
-        1 < argc ? NUM2INT(argv[1]) : 0,
-        2 < argc ? NUM2INT(argv[2]) : 0);
+    int x = 0 < argc ? NUM2INT(argv[0]) : 0;
+    int y = 1 < argc ? NUM2INT(argv[1]) : 0;
+    int z = 2 < argc ? NUM2INT(argv[2]) : 0;
+    if(x < 0 || x >= ptr->xsize) return Qnil;
+    if(y < 0 || y >= ptr->ysize) return Qnil;
+    if(z < 0 || z >= ptr->zsize) return Qnil;
+    short ret = ptr->get_internal(argc, x, y, z);
     return INT2NUM((int)ret);
   } else {
     rb_raise(rb_eArgError,
@@ -219,12 +222,13 @@ static VALUE rb_table_get(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_table_set(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   if(argc == ptr->dim+1) {
-    ptr->set_internal(
-        argc,
-        0 < argc-1 ? NUM2INT(argv[0]) : 0,
-        1 < argc-1 ? NUM2INT(argv[1]) : 0,
-        2 < argc-1 ? NUM2INT(argv[2]) : 0,
-        NUM2INT(argv[argc-1]));
+    int x = 0 < argc-1 ? NUM2INT(argv[0]) : 0;
+    int y = 1 < argc-1 ? NUM2INT(argv[1]) : 0;
+    int z = 2 < argc-1 ? NUM2INT(argv[2]) : 0;
+    if(x < 0 || x >= ptr->xsize) return Qnil;
+    if(y < 0 || y >= ptr->ysize) return Qnil;
+    if(z < 0 || z >= ptr->zsize) return Qnil;
+    ptr->set_internal(argc, x, y, z, NUM2INT(argv[argc-1]));
   } else {
     rb_raise(rb_eArgError,
         "wrong number of arguments (%d for %d)", argc, ptr->dim+1);

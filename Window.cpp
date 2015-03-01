@@ -354,6 +354,11 @@ static void window_free(Window *ptr) {
 
 static VALUE window_alloc(VALUE klass) {
   Window *ptr = ALLOC(Window);
+  ptr->windowskin = nullptr;
+  ptr->contents = nullptr;
+  ptr->cursor_rect = nullptr;
+  ptr->viewport = nullptr;
+  ptr->tone = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, window_mark, window_free, ptr);
   ptr->rb_parent = ret;
   return ret;

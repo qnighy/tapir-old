@@ -63,7 +63,7 @@ int Sprite::height() {
 void Sprite::render(
     SDL_Renderer *renderer,
     int rox, int roy, int rwidth, int rheight) {
-  if(!this->visible || !this->bitmap) return;
+  if(!this->visible || !this->bitmap || !this->bitmap->surface) return;
   // fprintf(stderr, "render!\n");
   SDL_Rect src_rect_orig;
   src_rect_orig.x = this->src_rect->x;
@@ -339,6 +339,11 @@ static void sprite_free(Sprite *ptr) {
 
 static VALUE sprite_alloc(VALUE klass) {
   Sprite *ptr = ALLOC(Sprite);
+  ptr->bitmap = nullptr;
+  ptr->src_rect = nullptr;
+  ptr->viewport = nullptr;
+  ptr->color = nullptr;
+  ptr->tone = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, sprite_mark, sprite_free, ptr);
   ptr->rb_parent = ret;
   return ret;

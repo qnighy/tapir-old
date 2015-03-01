@@ -39,6 +39,7 @@ void Tilemap::initialize(Viewport *viewport) {
       textures[i][j] = nullptr;
     }
   }
+  cached_data = nullptr;
 }
 void Tilemap::dispose() {
   if(!this->is_disposed) {
@@ -83,24 +84,37 @@ void Tilemap::render(
     SDL_Renderer *renderer,
     int rox, int roy, int rwidth, int rheight, bool is_sub) {
   if(!this->visible || !this->map_data) return;
+  int zsize = this->map_data->zsize;
   int ysize = this->map_data->ysize;
   int xsize = this->map_data->xsize;
   if(ysize == 0 || xsize == 0) return;
-  if(textures[0][0]) {
-    int w, h;
-    SDL_QueryTexture(textures[0][0], NULL, NULL, &w, &h);
-    if(w != xsize*32 || h != ysize*32) {
-      for(int i = 0; i < 3; ++i) {
-        for(int j = 0; j < 5; ++j) {
-          SDL_DestroyTexture(textures[i][j]);
-          textures[i][j] = nullptr;
-        }
+  bool updated = false;
+  if(!cached_data) {
+    updated = true;
+  } else if(
+      cached_xsize != xsize ||
+      cached_ysize != ysize ||
+      cached_zsize != zsize) {
+    updated = true;
+  } else {
+    int size = xsize*ysize*zsize;
+    for(int i = 0; i < size; ++i) {
+      if(map_data->data[i] != cached_data[i]) {
+        updated = true;
       }
     }
   }
-  bool updated = false;
-  if(!textures[0][0]) {
-    updated = true;
+  if(cached_data && updated) {
+    for(int i = 0; i < 3; ++i) {
+      for(int j = 0; j < 5; ++j) {
+        SDL_DestroyTexture(textures[i][j]);
+        textures[i][j] = nullptr;
+      }
+    }
+    delete[] cached_data;
+    cached_data = nullptr;
+  }
+  if(updated) {
     for(int i = 0; i < 3; ++i) {
       for(int j = 0; j < 5; ++j) {
         textures[i][j] =
@@ -110,6 +124,14 @@ void Tilemap::render(
         SDL_SetTextureAlphaMod(textures[i][j], 255);
         SDL_SetTextureBlendMode(textures[i][j], SDL_BLENDMODE_BLEND);
       }
+    }
+    cached_xsize = xsize;
+    cached_ysize = ysize;
+    cached_zsize = zsize;
+    cached_data = new short[xsize*ysize*zsize];
+    int size = xsize*ysize*zsize;
+    for(int i = 0; i < size; ++i) {
+      cached_data[i] = map_data->data[i];
     }
   }
   // return;
@@ -393,6 +415,19 @@ static void tilemap_free(Tilemap *ptr) {
 
 static VALUE tilemap_alloc(VALUE klass) {
   Tilemap *ptr = ALLOC(Tilemap);
+  for(int i = 0; i < 9; ++i) {
+    ptr->bitmaps[i] = nullptr;
+  }
+  ptr->map_data = nullptr;
+  ptr->flash_data = nullptr;
+  ptr->flags = nullptr;
+  ptr->viewport = nullptr;
+  for(int i = 0; i < 3; ++i) {
+    for(int j = 0; j < 5; ++j) {
+      ptr->textures[i][j] = nullptr;
+    }
+  }
+  ptr->cached_data = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, tilemap_mark, tilemap_free, ptr);
   ptr->rb_parent = ret;
   return ret;

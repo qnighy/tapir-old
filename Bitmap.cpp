@@ -68,14 +68,33 @@ Rect *Bitmap::rect() {
 }
 void Bitmap::blt(int x, int y, Bitmap *src_bitmap, Rect *src_rect,
     int opacity) {
-  fprintf(stderr, "TODO: Bitmap::blt\n");
+  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
+  SDL_Texture *src_texture =
+    SDL_CreateTextureFromSurface(renderer, src_bitmap->surface);
+  SDL_SetTextureBlendMode(src_texture, SDL_BLENDMODE_BLEND);
+  SDL_SetTextureAlphaMod(src_texture, opacity);
+  SDL_Rect srect;
+  srect.x = src_rect->x;
+  srect.y = src_rect->y;
+  srect.w = src_rect->width;
+  srect.h = src_rect->height;
+  SDL_Rect drect;
+  drect.x = x;
+  drect.y = y;
+  drect.w = srect.w;
+  drect.h = srect.h;
+  SDL_RenderCopy(renderer, src_texture, &srect, &drect);
+  SDL_DestroyTexture(src_texture);
+  SDL_DestroyRenderer(renderer);
+  if(this->texture) {
+    SDL_UpdateTexture(this->texture, &drect, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
     int opacity) {
   fprintf(stderr, "TODO: Bitmap::stretch_blt\n");
 }
 void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
-  invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   SDL_SetRenderDrawColor(
@@ -87,6 +106,9 @@ void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
   rect.h = height;
   SDL_RenderFillRect(renderer, &rect);
   SDL_DestroyRenderer(renderer);
+  if(this->texture) {
+    SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::fill_rect(Rect *rect, Color *color) {
   fill_rect(rect->x, rect->y, rect->width, rect->height, color);
@@ -102,15 +124,17 @@ void Bitmap::gradient_fill_rect(
   fprintf(stderr, "TODO: Bitmap::gradient_fill_rect\n");
 }
 void Bitmap::clear() {
-  invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
   SDL_RenderFillRect(renderer, NULL);
   SDL_DestroyRenderer(renderer);
+  if(this->texture) {
+    SDL_Rect rect = {0, 0, surface->w, surface->h};
+    SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::clear_rect(int x, int y, int width, int height) {
-  invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -121,6 +145,9 @@ void Bitmap::clear_rect(int x, int y, int width, int height) {
   rect.h = height;
   SDL_RenderFillRect(renderer, &rect);
   SDL_DestroyRenderer(renderer);
+  if(this->texture) {
+    SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::clear_rect(Rect *rect) {
   clear_rect(rect->x, rect->y, rect->width, rect->height);
@@ -170,7 +197,6 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
     fprintf(stderr, "Font Not Found\n");
     quitSDL(1);
   }
-  invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_Color color;
   color.r = this->font->color->red;
@@ -215,6 +241,11 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   SDL_DestroyTexture(text_texture);
   SDL_FreeSurface(text_surface);
   SDL_DestroyRenderer(renderer);
+  if(this->texture) {
+    SDL_Rect rect = {0, 0, surface->w, surface->h};
+    SDL_UpdateTexture(
+        this->texture, &rect, this->surface->pixels, this->surface->pitch);
+  }
 }
 void Bitmap::draw_text(Rect *rect, const char *str,
     int align) {
@@ -366,6 +397,9 @@ static void bitmap_free(Bitmap *ptr) {
 
 static VALUE bitmap_alloc(VALUE klass) {
   Bitmap *ptr = ALLOC(Bitmap);
+  ptr->surface = nullptr;
+  ptr->texture = nullptr;
+  ptr->font = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, bitmap_mark, bitmap_free, ptr);
   ptr->rb_parent = ret;
   return ret;

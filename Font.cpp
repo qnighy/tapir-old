@@ -248,6 +248,9 @@ static void font_mark(Font *ptr) {
 
 static VALUE font_alloc(VALUE klass) {
   Font *ptr = ALLOC(Font);
+  ptr->name = Qnil;
+  ptr->color = nullptr;
+  ptr->out_color = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, font_mark, -1, ptr);
   ptr->rb_parent = ret;
   return ret;

@@ -28,6 +28,8 @@ struct Tilemap {
   bool is_disposed;
 
   SDL_Texture *textures[3][5];
+  int cached_xsize, cached_ysize, cached_zsize;
+  short *cached_data;
 
   TilemapSub sub;
 

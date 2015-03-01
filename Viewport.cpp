@@ -191,11 +191,17 @@ static void viewport_mark(Viewport *ptr) {
 
 static void viewport_free(Viewport *ptr) {
   ptr->dispose();
+  for(Renderable *r : *ptr->renderables) {
+    Graphics::force_unregister_renderable(r);
+  }
   xfree(ptr);
 }
 
 static VALUE viewport_alloc(VALUE klass) {
   Viewport *ptr = ALLOC(Viewport);
+  ptr->rect = nullptr;
+  ptr->color = nullptr;
+  ptr->tone = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, viewport_mark, viewport_free, ptr);
   ptr->rb_parent = ret;
   return ret;
