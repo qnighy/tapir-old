@@ -15,14 +15,13 @@ void Bitmap::initialize(const char *filename) {
   if(!rwops) rwops = openPath(std::string(filename)+".bmp");
   if(rwops == nullptr) {
     fprintf(stderr, "image %s not found\n", filename);
-    SDL_Quit();
-    exit(1);
+    quitSDL(1);
   }
   // fprintf(stderr, "loaded %s.png\n", filename);
   this->surface = IMG_Load_RW(rwops, true);
   if(!this->surface) {
     fprintf(stderr, "Couldn't load image: %s\n", SDL_GetError());
-    exit(1);
+    quitSDL(1);
   }
   this->font = Font::create();
   this->texture = nullptr;
@@ -169,7 +168,7 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   TTF_Font *font = this->font->createTTFFont();
   if(!font) {
     fprintf(stderr, "Font Not Found\n");
-    exit(1);
+    quitSDL(1);
   }
   invalidateTexture();
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
@@ -225,7 +224,7 @@ Rect *Bitmap::text_size(const char *str) {
   TTF_Font *font = this->font->createTTFFont();
   if(!font) {
     fprintf(stderr, "Font Not Found\n");
-    exit(1);
+    quitSDL(1);
   }
   int w, h;
   TTF_SizeUTF8(font, str, &w, &h);

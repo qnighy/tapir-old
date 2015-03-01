@@ -7,6 +7,6 @@ extern SDL_Window *mainWindow;
 extern SDL_Renderer *mainWindowRenderer;
 void initSDL();
 void pollEvent();
-void quitSDL();
+void quitSDL(int exitcode = 0);
 
 #endif // SDL_MISC_H_INCLUDED

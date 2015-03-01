@@ -50,11 +50,11 @@ void pollEvent() {
   }
 }
 
-void quitSDL() {
+void quitSDL(int exitcode) {
   SDL_DestroyRenderer(mainWindowRenderer);
   SDL_DestroyWindow(mainWindow);
   TTF_Quit();
   IMG_Quit();
   SDL_Quit();
-  exit(0);
+  exit(exitcode);
 }

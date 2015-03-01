@@ -26,10 +26,23 @@ void Tilemap::initialize(Viewport *viewport) {
   this->renderable_entry.z = 0;
   this->renderable_entry.renderable_id = current_renderable_id++;
   Graphics::register_renderable((Renderable*)this, this->viewport);
+
+  for(int i = 0; i < 3; ++i) {
+    for(int j = 0; j < 5; ++j) {
+      textures[i][j] = nullptr;
+    }
+  }
 }
 void Tilemap::dispose() {
   if(!this->is_disposed) {
     Graphics::unregister_renderable((Renderable*)this, this->viewport);
+    for(int i = 0; i < 3; ++i) {
+      for(int j = 0; j < 5; ++j) {
+        if(textures[i][j]) {
+          SDL_DestroyTexture(textures[i][j]);
+        }
+      }
+    }
     this->is_disposed = true;
   }
 }
@@ -49,49 +62,113 @@ void Tilemap::render(SDL_Renderer *renderer) {
   int sxi = ox/32;
   int eyi = (oy+Graphics::height)/32+1;
   int exi = (ox+Graphics::width)/32+1;
-  // return;
-  // fprintf(stderr, "render!\n");
-  // TODO: Tilemap::render
-  for(int zi = 0; zi < 3; ++zi) {
-    for(int yi = syi; yi < eyi; ++yi) {
-      for(int xi = sxi; xi < exi; ++xi) {
-        int yii = yi%ysize;
-        if(yii<0) yii+=ysize;
-        int xii = xi%xsize;
-        if(xii<0) xii+=xsize;
-        {
-          SDL_Rect dst_rect;
-          dst_rect.x = xi*32-ox;
-          dst_rect.y = yi*32-oy;
-          dst_rect.w = 32;
-          dst_rect.h = 32;
-          SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-          SDL_RenderDrawRect(renderer, &dst_rect);
-        }
-        // int tileid = this->map_data->get(xii, yii, zi);
-        // if(0x0001 <= tileid && tileid < 0x0400) {
-        int tileid = 0;
-        if(0x0000 <= tileid && tileid < 0x0400) {
-          int bitmapid = 5 + ((tileid>>8)&3);
-          SDL_Rect src_rect;
-          src_rect.x = ((tileid&7)|((tileid>>4)&8))*32;
-          src_rect.y = ((tileid>>3)&15)*32;
-          src_rect.w = 32;
-          src_rect.h = 32;
-          SDL_Rect dst_rect;
-          dst_rect.x = xi*32-ox;
-          dst_rect.y = yi*32-oy;
-          dst_rect.w = 32;
-          dst_rect.h = 32;
-          if(!this->bitmaps[bitmapid]) continue;
-          SDL_Texture *texture =
-            this->bitmaps[bitmapid]->createTexture(renderer);
-          SDL_SetTextureAlphaMod(texture, 255);
-          SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-          SDL_RenderCopy(renderer, texture, &src_rect, &dst_rect);
+  if(textures[0][0]) {
+    int w, h;
+    SDL_QueryTexture(textures[0][0], NULL, NULL, &w, &h);
+    if(w != xsize*32 || h != ysize*32) {
+      for(int i = 0; i < 3; ++i) {
+        for(int j = 0; j < 5; ++j) {
+          SDL_DestroyTexture(textures[i][j]);
+          textures[i][j] = nullptr;
         }
       }
     }
+  }
+  bool updated = false;
+  if(!textures[0][0]) {
+    updated = true;
+    for(int i = 0; i < 3; ++i) {
+      for(int j = 0; j < 5; ++j) {
+        textures[i][j] =
+          SDL_CreateTexture(
+              renderer, SDL_PIXELFORMAT_ABGR8888,
+              SDL_TEXTUREACCESS_STREAMING, xsize*32, ysize*32);
+        SDL_SetTextureAlphaMod(textures[i][j], 255);
+        SDL_SetTextureBlendMode(textures[i][j], SDL_BLENDMODE_BLEND);
+      }
+    }
+  }
+  // return;
+  // fprintf(stderr, "render!\n");
+  // TODO: Tilemap::render
+  for(int i = 0; i < 3; ++i) {
+    if(!updated) break;
+    for(int j = 0; j < 5; ++j) {
+      void *pixels;
+      int pitch;
+    Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+      rmask = 0xff000000;
+      gmask = 0x00ff0000;
+      bmask = 0x0000ff00;
+      amask = 0x000000ff;
+#else
+      rmask = 0x000000ff;
+      gmask = 0x0000ff00;
+      bmask = 0x00ff0000;
+      amask = 0xff000000;
+#endif
+      SDL_LockTexture(textures[i][j], NULL, &pixels, &pitch);
+      SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
+          pixels, xsize*32, ysize*32, 32, pitch,
+          rmask, gmask, bmask, amask);
+      int zi = j == 4 ? 2 : j;
+      for(int yi = 0; yi < ysize; ++yi) {
+        for(int xi = 0; xi < xsize; ++xi) {
+          int tileid = this->map_data->get(xi, yi, zi);
+          if(j == 3) {
+            SDL_Rect dst_rect;
+            dst_rect = {xi*32, yi*32, 16, 16};
+            SDL_FillRect(surface, &dst_rect,
+                SDL_MapRGBA(surface->format, 0, 0, 0,
+                  (tileid&1) ? 128 : 0));
+            dst_rect = {xi*32+16, yi*32, 16, 16};
+            SDL_FillRect(surface, &dst_rect,
+                SDL_MapRGBA(surface->format, 0, 0, 0,
+                  (tileid&2) ? 128 : 0));
+            dst_rect = {xi*32, yi*32+16, 16, 16};
+            SDL_FillRect(surface, &dst_rect,
+                SDL_MapRGBA(surface->format, 0, 0, 0,
+                  (tileid&4) ? 128 : 0));
+            dst_rect = {xi*32+16, yi*32+16, 16, 16};
+            SDL_FillRect(surface, &dst_rect,
+                SDL_MapRGBA(surface->format, 0, 0, 0,
+                  (tileid&8) ? 128 : 0));
+            continue;
+          }
+          int flag = this->flags ? this->flags->get(tileid) : 0;
+          if((flag&0x0010) && j==2) continue;
+          if((!(flag&0x0010)) && j==4) continue;
+          if(0x0000 < tileid && tileid < 0x0400) {
+            int bitmapid = 5 + ((tileid>>8)&3);
+            SDL_Rect src_rect = {0, 0, 32, 32};
+            src_rect.x = ((tileid&7)|((tileid>>4)&8))*32;
+            src_rect.y = ((tileid>>3)&15)*32;
+            SDL_Rect dst_rect = {xi*32, yi*32, 32, 32};
+            if(!this->bitmaps[bitmapid]) continue;
+            SDL_SetSurfaceBlendMode(
+                this->bitmaps[bitmapid]->surface, SDL_BLENDMODE_NONE);
+            SDL_BlitSurface(
+                this->bitmaps[bitmapid]->surface, &src_rect,
+                surface, &dst_rect);
+          } else {
+            SDL_Rect dst_rect = {xi*32, yi*32, 32, 32};
+            SDL_FillRect(surface, &dst_rect,
+                SDL_MapRGBA(surface->format, 0, 0, 0, 0));
+          }
+        }
+      }
+      SDL_FreeSurface(surface);
+      SDL_UnlockTexture(textures[i][j]);
+    }
+  }
+  for(int j = 0; j < 5; ++j) {
+    SDL_Rect dst_rect;
+    dst_rect.x = -ox;
+    dst_rect.y = -oy;
+    dst_rect.w = xsize*32;
+    dst_rect.h = ysize*32;
+    SDL_RenderCopy(renderer, textures[0][j], NULL, &dst_rect);
   }
 }
 

@@ -22,6 +22,8 @@ struct Tilemap {
 
   bool is_disposed;
 
+  SDL_Texture *textures[3][5];
+
   void initialize(Viewport *viewport = nullptr);
   void dispose();
   bool disposed();
