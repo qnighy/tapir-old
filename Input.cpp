@@ -135,13 +135,13 @@ VALUE rb_input_update(VALUE self) {
 
   dir4 = dir8;
   if(dir4 == 1) {
-    dir4 = buttoncounts[RGSS_DOWN] > buttoncounts[RGSS_LEFT] ? 2 : 4;
+    dir4 = buttoncounts[RGSS_DOWN] < buttoncounts[RGSS_LEFT] ? 2 : 4;
   } else if(dir4 == 3) {
-    dir4 = buttoncounts[RGSS_DOWN] > buttoncounts[RGSS_RIGHT] ? 2 : 6;
+    dir4 = buttoncounts[RGSS_DOWN] < buttoncounts[RGSS_RIGHT] ? 2 : 6;
   } else if(dir4 == 7) {
-    dir4 = buttoncounts[RGSS_UP] > buttoncounts[RGSS_LEFT] ? 8 : 4;
+    dir4 = buttoncounts[RGSS_UP] < buttoncounts[RGSS_LEFT] ? 8 : 4;
   } else if(dir4 == 9) {
-    dir4 = buttoncounts[RGSS_UP] > buttoncounts[RGSS_RIGHT] ? 8 : 6;
+    dir4 = buttoncounts[RGSS_UP] < buttoncounts[RGSS_RIGHT] ? 8 : 6;
   }
 
   return Qnil;
