@@ -6,7 +6,7 @@
 
 extern uint64_t current_renderable_id;
 enum class RenderableType {
-  NONE, SPRITE, WINDOW, PLANE, TILEMAP, VIEWPORT
+  NONE, SPRITE, WINDOW, PLANE, TILEMAP, TILEMAP_SUB, VIEWPORT
 };
 struct Renderable {
   RenderableType type;

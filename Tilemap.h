@@ -9,6 +9,11 @@
 #include "Viewport.h"
 #include "renderable.h"
 
+struct TilemapSub {
+  struct Renderable renderable_entry;
+  struct Tilemap *parent;
+};
+
 struct Tilemap {
   struct Renderable renderable_entry;
   VALUE rb_parent;
@@ -24,6 +29,8 @@ struct Tilemap {
 
   SDL_Texture *textures[3][5];
 
+  TilemapSub sub;
+
   void initialize(Viewport *viewport = nullptr);
   void dispose();
   bool disposed();
@@ -31,7 +38,7 @@ struct Tilemap {
 
   static Tilemap *create(Viewport *viewport = nullptr);
 
-  void render(SDL_Renderer *renderer);
+  void render(SDL_Renderer *renderer, bool is_sub);
 };
 
 extern VALUE rb_cTilemap;

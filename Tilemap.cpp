@@ -26,6 +26,13 @@ void Tilemap::initialize(Viewport *viewport) {
   this->renderable_entry.z = 0;
   this->renderable_entry.renderable_id = current_renderable_id++;
   Graphics::register_renderable((Renderable*)this, this->viewport);
+  this->sub.renderable_entry.type = RenderableType::TILEMAP_SUB;
+  this->sub.renderable_entry.y = 0;
+  this->sub.renderable_entry.z = 200;
+  this->sub.renderable_entry.renderable_id = current_renderable_id++;
+  this->sub.parent = this;
+  Graphics::register_renderable((Renderable*)&this->sub, this->viewport);
+
 
   for(int i = 0; i < 3; ++i) {
     for(int j = 0; j < 5; ++j) {
@@ -36,6 +43,7 @@ void Tilemap::initialize(Viewport *viewport) {
 void Tilemap::dispose() {
   if(!this->is_disposed) {
     Graphics::unregister_renderable((Renderable*)this, this->viewport);
+    Graphics::unregister_renderable((Renderable*)&this->sub, this->viewport);
     for(int i = 0; i < 3; ++i) {
       for(int j = 0; j < 5; ++j) {
         if(textures[i][j]) {
@@ -53,15 +61,29 @@ void Tilemap::update() {
   // TODO: Tilemap::update
 }
 
-void Tilemap::render(SDL_Renderer *renderer) {
+static int autotilemap[4][96] = {
+  { 18,  2, 18,  2, 18,  2, 18,  2, 18,  2, 18,  2, 18,  2, 18,  2,
+    16, 16, 16, 16, 10, 10, 10, 10, 18, 18,  2,  2, 18,  2, 18,  2,
+    16, 10,  8,  8, 10, 10, 18,  2, 16, 16,  8,  8, 16, 10,  8,  0,
+    10,  8,  2,  0, 10,  8,  2,  0, 10,  8,  2,  0, 10,  8,  2,  0},
+  { 17, 17,  3,  3, 17, 17,  3,  3, 17, 17,  3,  3, 17, 17,  3,  3,
+    17,  3, 17,  3,  9,  9,  9,  9, 19, 19, 19, 19, 17, 17,  3,  3,
+    19,  9,  9,  9, 11, 11, 19, 19, 17,  3, 11,  9, 19, 11, 11,  1,
+     9,  9,  1,  1, 11, 11,  3,  3,  9,  9,  1,  1, 11, 11,  3,  3},
+  { 14, 14, 14, 14, 14, 14, 14, 14,  6,  6,  6,  6,  6,  6,  6,  6,
+    12, 12, 12, 12, 14, 14,  6,  6, 14,  6, 14,  6, 22, 22, 22, 22,
+    12, 22, 12, 12, 14,  6, 22, 22, 20, 20, 12, 20, 20, 22, 20,  4,
+     6,  4,  6,  4,  6,  4,  6,  4, 14, 12, 14, 12, 14, 12, 14, 12},
+  { 13, 13, 13, 13,  7,  7,  7,  7, 13, 13, 13, 13,  7,  7,  7,  7,
+    13, 13,  7,  7, 13,  7, 13,  7, 15, 15, 15, 15, 21, 21, 21, 21,
+    15, 21, 13,  7, 15, 15, 23, 23, 21, 21, 15, 21, 23, 23, 23,  5,
+     5,  5,  5,  5,  7,  7,  7,  7, 13, 13, 13, 13, 15, 15, 15, 15}};
+
+void Tilemap::render(SDL_Renderer *renderer, bool is_sub) {
   if(!this->visible || !this->map_data) return;
   int ysize = this->map_data->ysize;
   int xsize = this->map_data->xsize;
   if(ysize == 0 || xsize == 0) return;
-  int syi = oy/32;
-  int sxi = ox/32;
-  int eyi = (oy+Graphics::height)/32+1;
-  int exi = (ox+Graphics::width)/32+1;
   if(textures[0][0]) {
     int w, h;
     SDL_QueryTexture(textures[0][0], NULL, NULL, &w, &h);
@@ -112,32 +134,22 @@ void Tilemap::render(SDL_Renderer *renderer) {
       SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(
           pixels, xsize*32, ysize*32, 32, pitch,
           rmask, gmask, bmask, amask);
-      int zi = j == 4 ? 2 : j;
+      int zi = j >= 3 ? 2 : j == 2 ? 3 : j;
       for(int yi = 0; yi < ysize; ++yi) {
         for(int xi = 0; xi < xsize; ++xi) {
           int tileid = this->map_data->get(xi, yi, zi);
-          if(j == 3) {
+          if(j == 2) {
             SDL_Rect dst_rect;
-            dst_rect = {xi*32, yi*32, 16, 16};
-            SDL_FillRect(surface, &dst_rect,
-                SDL_MapRGBA(surface->format, 0, 0, 0,
-                  (tileid&1) ? 128 : 0));
-            dst_rect = {xi*32+16, yi*32, 16, 16};
-            SDL_FillRect(surface, &dst_rect,
-                SDL_MapRGBA(surface->format, 0, 0, 0,
-                  (tileid&2) ? 128 : 0));
-            dst_rect = {xi*32, yi*32+16, 16, 16};
-            SDL_FillRect(surface, &dst_rect,
-                SDL_MapRGBA(surface->format, 0, 0, 0,
-                  (tileid&4) ? 128 : 0));
-            dst_rect = {xi*32+16, yi*32+16, 16, 16};
-            SDL_FillRect(surface, &dst_rect,
-                SDL_MapRGBA(surface->format, 0, 0, 0,
-                  (tileid&8) ? 128 : 0));
+            for(int off = 0; off < 4; ++off) {
+              dst_rect = {xi*32+16*(off&1), yi*32+16*((off>>1)&1), 16, 16};
+              SDL_FillRect(surface, &dst_rect,
+                  SDL_MapRGBA(surface->format, 0, 0, 0,
+                    (tileid&(1<<off)) ? 128 : 0));
+            }
             continue;
           }
           int flag = this->flags ? this->flags->get(tileid) : 0;
-          if((flag&0x0010) && j==2) continue;
+          if((flag&0x0010) && j==3) continue;
           if((!(flag&0x0010)) && j==4) continue;
           if(0x0000 < tileid && tileid < 0x0400) {
             int bitmapid = 5 + ((tileid>>8)&3);
@@ -151,6 +163,70 @@ void Tilemap::render(SDL_Renderer *renderer) {
             SDL_BlitSurface(
                 this->bitmaps[bitmapid]->surface, &src_rect,
                 surface, &dst_rect);
+          } else if(0x0600 <= tileid && tileid < 0x0680) {
+            int bitmapid = 4;
+            int ti = tileid-0x0600;
+            SDL_Rect src_rect = {0, 0, 32, 32};
+            src_rect.x = (ti&7)*32;
+            src_rect.y = ((ti>>3)&15)*32;
+            SDL_Rect dst_rect = {xi*32, yi*32, 32, 32};
+            if(!this->bitmaps[bitmapid]) continue;
+            SDL_SetSurfaceBlendMode(
+                this->bitmaps[bitmapid]->surface, SDL_BLENDMODE_NONE);
+            SDL_BlitSurface(
+                this->bitmaps[bitmapid]->surface, &src_rect,
+                surface, &dst_rect);
+          } else if(0x0800 <= tileid && tileid < 0x2000) {
+            int autoidx = (tileid-0x0800)%0x0030;
+            int ti = (tileid-0x0800)/0x0030;
+            int bitmapid;
+            int atx, aty;
+            if(ti < 16) {
+              bitmapid = 0;
+              int tii = ti;
+              if(tii == 1 || tii == 2) tii ^= 3;
+              if((tii&1) == 0) {
+                atx = ((tii&4)<<1) + i*2;
+              } else {
+                atx = ((tii&4)<<1) + 3*2;
+              }
+              aty = ((tii>>1)&1)*3 + ((tii>>3)&1)*6;
+            } else if(ti < 48) {
+              bitmapid = 1;
+              int tii = ti-16;
+              atx = (tii&7)<<1;
+              aty = ((tii>>3)&3)*3;
+            } else if(ti < 80) {
+              bitmapid = 2;
+              int tii = ti-48;
+              autoidx += 48;
+              atx = (tii&7)<<1;
+              aty = ((tii>>3)&3)<<1;
+            } else {
+              bitmapid = 3;
+              int tii = ti-80;
+              atx = (tii&7)<<1;
+              aty = ((tii>>4)&3)*5;
+              if(tii&8) {
+                autoidx += 48;
+                aty += 3;
+              }
+            }
+            for(int off = 0; off < 4; ++off) {
+              int k = autotilemap[off][autoidx];
+              SDL_Rect src_rect = {0, 0, 16, 16};
+              src_rect.x = atx*32+(k&3)*16;
+              src_rect.y = aty*32+(k>>2)*16;
+              SDL_Rect dst_rect = {0, 0, 16, 16};
+              dst_rect.x = xi*32+16*(off&1);
+              dst_rect.y = yi*32+16*((off>>1)&1);
+              if(!this->bitmaps[bitmapid]) continue;
+              SDL_SetSurfaceBlendMode(
+                  this->bitmaps[bitmapid]->surface, SDL_BLENDMODE_NONE);
+              SDL_BlitSurface(
+                  this->bitmaps[bitmapid]->surface, &src_rect,
+                  surface, &dst_rect);
+            }
           } else {
             SDL_Rect dst_rect = {xi*32, yi*32, 32, 32};
             SDL_FillRect(surface, &dst_rect,
@@ -163,6 +239,8 @@ void Tilemap::render(SDL_Renderer *renderer) {
     }
   }
   for(int j = 0; j < 5; ++j) {
+    if(is_sub && j < 4) continue;
+    if(!is_sub && j >= 4) continue;
     SDL_Rect dst_rect;
     dst_rect.x = -ox;
     dst_rect.y = -oy;
@@ -400,8 +478,10 @@ static VALUE rb_tilemap_viewport(VALUE self) {
 static VALUE rb_tilemap_set_viewport(VALUE self, VALUE viewport) {
   Tilemap *ptr = convertTilemap(self);
   Graphics::unregister_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::unregister_renderable((Renderable*)&ptr->sub, ptr->viewport);
   ptr->viewport = convertViewportOrNil(viewport);
   Graphics::register_renderable((Renderable*)ptr, ptr->viewport);
+  Graphics::register_renderable((Renderable*)&ptr->sub, ptr->viewport);
   return viewport;
 }
 static VALUE rb_tilemap_visible(VALUE self) {

@@ -42,7 +42,10 @@ void Graphics::render_renderable(Renderable *r, SDL_Renderer *renderer) {
       ((Window*)r)->render(renderer);
       break;
     case RenderableType::TILEMAP:
-      ((Tilemap*)r)->render(renderer);
+      ((Tilemap*)r)->render(renderer, false);
+      break;
+    case RenderableType::TILEMAP_SUB:
+      ((TilemapSub*)r)->parent->render(renderer, true);
       break;
     default:
       break;
