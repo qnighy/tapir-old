@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 
 #include <SDL_image.h>
 
@@ -23,24 +24,24 @@ void Bitmap::initialize(const char *filename) {
     fprintf(stderr, "Couldn't load image: %s\n", SDL_GetError());
     quitSDL(1);
   }
+  {
+    SDL_Surface *old = this->surface;
+    this->surface = SDL_ConvertSurfaceFormat(
+        old, stdformat, 0);
+    SDL_FreeSurface(old);
+  }
   this->font = Font::create();
   this->texture = nullptr;
 }
 void Bitmap::initialize(int width, int height) {
-  Uint32 rmask, gmask, bmask, amask;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
-    amask = 0xff000000;
-#endif
   this->surface = SDL_CreateRGBSurface(
       0, width, height, 32, rmask, gmask, bmask, amask);
+  {
+    SDL_Surface *old = this->surface;
+    this->surface = SDL_ConvertSurfaceFormat(
+        old, stdformat, 0);
+    SDL_FreeSurface(old);
+  }
   this->font = Font::create();
   this->texture = nullptr;
 }
@@ -66,47 +67,150 @@ int Bitmap::height() {
 Rect *Bitmap::rect() {
   return Rect::create(0, 0, this->surface->w, this->surface->h);
 }
+static void blt(
+    SDL_Surface *dst_surface, int dx, int dy,
+    SDL_Surface *src_surface, int sx, int sy, int width, int height,
+    int opacity) {
+  int offx = sx-dx;
+  int offy = sy-dy;
+  int x1 = std::max<int>({dx, 0, -offx});
+  int y1 = std::max<int>({dy, 0, -offy});
+  int x2 = std::min<int>({dx+width, dst_surface->w, src_surface->w-offx});
+  int y2 = std::min<int>({dy+height, dst_surface->h, src_surface->h-offy});
+  SDL_LockSurface(dst_surface);
+  SDL_LockSurface(src_surface);
+  for(int xx = x1; xx < x2; ++xx) {
+    for(int yy = y1; yy < y2; ++yy) {
+      Uint32 *src_pixel =
+        (Uint32*)((Uint8*)src_surface->pixels +
+            (yy+offy) * src_surface->pitch + (xx+offx) * 4);
+      Uint8 srcR8, srcG8, srcB8, srcA8;
+      SDL_GetRGBA(
+          *src_pixel, src_surface->format, &srcR8, &srcG8, &srcB8, &srcA8);
+      double srcR = srcR8/255.0;
+      double srcG = srcG8/255.0;
+      double srcB = srcB8/255.0;
+      double srcA = srcA8/255.0*(opacity/255.0);
+      Uint32 *dst_pixel =
+        (Uint32*)((Uint8*)dst_surface->pixels +
+            yy * dst_surface->pitch + xx * 4);
+      Uint8 dstR8, dstG8, dstB8, dstA8;
+      SDL_GetRGBA(
+          *dst_pixel, dst_surface->format, &dstR8, &dstG8, &dstB8, &dstA8);
+      double dstR = dstR8/255.0;
+      double dstG = dstG8/255.0;
+      double dstB = dstB8/255.0;
+      double dstA = dstA8/255.0;
+      double newA = dstA*(1-srcA)+srcA;
+      double newR = (dstR*(dstA*(1-srcA))+srcR*srcA)/newA;
+      double newG = (dstG*(dstA*(1-srcA))+srcG*srcA)/newA;
+      double newB = (dstB*(dstA*(1-srcA))+srcB*srcA)/newA;
+      *dst_pixel =
+        SDL_MapRGBA(
+            dst_surface->format, newR*255, newG*255, newB*255, newA*255);
+    }
+  }
+  SDL_UnlockSurface(src_surface);
+  SDL_UnlockSurface(dst_surface);
+}
+static void stretch_blt(
+    SDL_Surface *dst_surface, int dx, int dy, int dwidth, int dheight,
+    SDL_Surface *src_surface, int sx, int sy, int swidth, int sheight,
+    int opacity) {
+  double scalex = (double)swidth/dwidth;
+  double scaley = (double)sheight/dheight;
+  int x1 = std::max<int>({dx, 0, dx-(int)(sx/scalex)});
+  int y1 = std::max<int>({dy, 0, dy-(int)(sy/scaley)});
+  int x2 = std::min<int>({
+      dx+dwidth, dst_surface->w, dx+(int)(src_surface->w-sx)/scalex});
+  int y2 = std::min<int>({
+      dy+dheight, dst_surface->h, dy+(int)(src_surface->h-sy)/scaley});
+  SDL_LockSurface(dst_surface);
+  SDL_LockSurface(src_surface);
+  for(int xx = x1; xx < x2; ++xx) {
+    for(int yy = y1; yy < y2; ++yy) {
+      Uint32 *src_pixel =
+        (Uint32*)((Uint8*)src_surface->pixels +
+            (int)((yy-dy)*scaley+sy) * src_surface->pitch +
+            (int)((xx-dx)*scalex+sx) * 4);
+      Uint8 srcR8, srcG8, srcB8, srcA8;
+      SDL_GetRGBA(
+          *src_pixel, src_surface->format, &srcR8, &srcG8, &srcB8, &srcA8);
+      double srcR = srcR8/255.0;
+      double srcG = srcG8/255.0;
+      double srcB = srcB8/255.0;
+      double srcA = srcA8/255.0*(opacity/255.0);
+      Uint32 *dst_pixel =
+        (Uint32*)((Uint8*)dst_surface->pixels +
+            yy * dst_surface->pitch + xx * 4);
+      Uint8 dstR8, dstG8, dstB8, dstA8;
+      SDL_GetRGBA(
+          *dst_pixel, dst_surface->format, &dstR8, &dstG8, &dstB8, &dstA8);
+      double dstR = dstR8/255.0;
+      double dstG = dstG8/255.0;
+      double dstB = dstB8/255.0;
+      double dstA = dstA8/255.0;
+      double newA = dstA*(1-srcA)+srcA;
+      double newR = (dstR*(dstA*(1-srcA))+srcR*srcA)/newA;
+      double newG = (dstG*(dstA*(1-srcA))+srcG*srcA)/newA;
+      double newB = (dstB*(dstA*(1-srcA))+srcB*srcA)/newA;
+      *dst_pixel =
+        SDL_MapRGBA(
+            dst_surface->format, newR*255, newG*255, newB*255, newA*255);
+    }
+  }
+  SDL_UnlockSurface(src_surface);
+  SDL_UnlockSurface(dst_surface);
+}
 void Bitmap::blt(int x, int y, Bitmap *src_bitmap, Rect *src_rect,
     int opacity) {
-  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
-  SDL_Texture *src_texture =
-    SDL_CreateTextureFromSurface(renderer, src_bitmap->surface);
-  SDL_SetTextureBlendMode(src_texture, SDL_BLENDMODE_BLEND);
-  SDL_SetTextureAlphaMod(src_texture, opacity);
-  SDL_Rect srect;
-  srect.x = src_rect->x;
-  srect.y = src_rect->y;
-  srect.w = src_rect->width;
-  srect.h = src_rect->height;
-  SDL_Rect drect;
-  drect.x = x;
-  drect.y = y;
-  drect.w = srect.w;
-  drect.h = srect.h;
-  SDL_RenderCopy(renderer, src_texture, &srect, &drect);
-  SDL_DestroyTexture(src_texture);
-  SDL_DestroyRenderer(renderer);
+  ::blt(surface, x, y, src_bitmap->surface,
+      src_rect->x, src_rect->y, src_rect->width, src_rect->height,
+      opacity);
   if(this->texture) {
-    SDL_UpdateTexture(this->texture, &drect, surface->pixels, surface->pitch);
+    SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
   }
 }
 void Bitmap::stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
     int opacity) {
-  fprintf(stderr, "TODO: Bitmap::stretch_blt\n");
+  ::stretch_blt(
+      surface,
+      dest_rect->x, dest_rect->y, dest_rect->width, dest_rect->height,
+      src_bitmap->surface,
+      src_rect->x, src_rect->y, src_rect->width, src_rect->height,
+      opacity);
+  if(this->texture) {
+    SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
-  SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-  SDL_SetRenderDrawColor(
-      renderer, color->red, color->green, color->blue, color->alpha);
-  SDL_Rect rect;
-  rect.x = x;
-  rect.y = y;
-  rect.w = width;
-  rect.h = height;
-  SDL_RenderFillRect(renderer, &rect);
-  SDL_DestroyRenderer(renderer);
+  int x1 = std::max(x, 0);
+  int y1 = std::max(y, 0);
+  int x2 = std::min(x+width, surface->w);
+  int y2 = std::min(y+height, surface->h);
+  double srcR = color->red / 255.0;
+  double srcG = color->green / 255.0;
+  double srcB = color->blue / 255.0;
+  double srcA = color->alpha / 255.0;
+  SDL_LockSurface(surface);
+  for(int xx = x1; xx < x2; ++xx) {
+    for(int yy = y1; yy < y2; ++yy) {
+      Uint32 *pixel =
+        (Uint32*)((Uint8*)surface->pixels +
+            yy * surface->pitch + xx * 4);
+      Uint8 dstR, dstG, dstB, dstA;
+      SDL_GetRGBA(*pixel, surface->format, &dstR, &dstG, &dstB, &dstA);
+      double newA = dstA/255.0*(1-srcA)+srcA;
+      double newR = (dstR/255.0*(dstA/255.0*(1-srcA))+srcR*srcA)/newA;
+      double newG = (dstG/255.0*(dstA/255.0*(1-srcA))+srcG*srcA)/newA;
+      double newB = (dstB/255.0*(dstA/255.0*(1-srcA))+srcB*srcA)/newA;
+      *pixel =
+        SDL_MapRGBA(surface->format, newR*255, newG*255, newB*255, newA*255);
+    }
+  }
+  SDL_UnlockSurface(surface);
   if(this->texture) {
+    SDL_Rect rect = {x1, y1, x2-x2, y2-y1};
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
@@ -116,12 +220,52 @@ void Bitmap::fill_rect(Rect *rect, Color *color) {
 void Bitmap::gradient_fill_rect(
     int x, int y, int width, int height, Color *color1, Color *color2,
     bool vertical) {
-  fprintf(stderr, "TODO: Bitmap::gradient_fill_rect\n");
+  int x1 = std::max(x, 0);
+  int y1 = std::max(y, 0);
+  int x2 = std::min(x+width, surface->w);
+  int y2 = std::min(y+height, surface->h);
+  double src1R = color1->red / 255.0;
+  double src1G = color1->green / 255.0;
+  double src1B = color1->blue / 255.0;
+  double src1A = color1->alpha / 255.0;
+  double src2R = color2->red / 255.0;
+  double src2G = color2->green / 255.0;
+  double src2B = color2->blue / 255.0;
+  double src2A = color2->alpha / 255.0;
+  SDL_LockSurface(surface);
+  for(int xx = x1; xx < x2; ++xx) {
+    for(int yy = y1; yy < y2; ++yy) {
+      double gratio = vertical ? (double)(yy-y1)/(y2-y1) :
+        (double)(xx-x1)/(x2-x1);
+      double srcR = src1R*(1-gratio)+src2R*gratio;
+      double srcG = src1G*(1-gratio)+src2G*gratio;
+      double srcB = src1B*(1-gratio)+src2B*gratio;
+      double srcA = src1A*(1-gratio)+src2A*gratio;
+      Uint32 *pixel =
+        (Uint32*)((Uint8*)surface->pixels +
+            yy * surface->pitch + xx * 4);
+      Uint8 dstR, dstG, dstB, dstA;
+      SDL_GetRGBA(*pixel, surface->format, &dstR, &dstG, &dstB, &dstA);
+      double newA = dstA/255.0*(1-srcA)+srcA;
+      double newR = (dstR/255.0*(dstA/255.0*(1-srcA))+srcR*srcA)/newA;
+      double newG = (dstG/255.0*(dstA/255.0*(1-srcA))+srcG*srcA)/newA;
+      double newB = (dstB/255.0*(dstA/255.0*(1-srcA))+srcB*srcA)/newA;
+      *pixel =
+        SDL_MapRGBA(surface->format, newR*255, newG*255, newB*255, newA*255);
+    }
+  }
+  SDL_UnlockSurface(surface);
+  if(this->texture) {
+    SDL_Rect rect = {x1, y1, x2-x2, y2-y1};
+    SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
+  }
 }
 void Bitmap::gradient_fill_rect(
     Rect *rect, Color *color1, Color *color2,
     bool vertical) {
-  fprintf(stderr, "TODO: Bitmap::gradient_fill_rect\n");
+  gradient_fill_rect(
+      rect->x, rect->y, rect->width, rect->height,
+      color1, color2, vertical);
 }
 void Bitmap::clear() {
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
@@ -154,31 +298,22 @@ void Bitmap::clear_rect(Rect *rect) {
 }
 Color *Bitmap::get_pixel(int x, int y) {
   SDL_LockSurface(surface);
-  SDL_PixelFormat *fmt = surface->format;
-  Uint8 *ptr =
-    (Uint8*)surface->pixels + y * surface->pitch + x * fmt->BytesPerPixel;
-  Color *ret = nullptr;
-  if(fmt->BytesPerPixel==1) {
-    SDL_Color color = fmt->palette->colors[*ptr];
-    ret = Color::create(color.r, color.g, color.b, color.a);
-  } else if(fmt->BytesPerPixel==2) {
-    // TODO
-  } else if(fmt->BytesPerPixel==3) {
-    // TODO
-  } else if(fmt->BytesPerPixel==4) {
-    // TODO
-    Uint32 val = *(Uint32*)ptr;
-    int red = ((val&fmt->Rmask)>>fmt->Rshift)<<fmt->Rloss;
-    int green = ((val&fmt->Gmask)>>fmt->Gshift)<<fmt->Gloss;
-    int blue = ((val&fmt->Bmask)>>fmt->Bshift)<<fmt->Bloss;
-    int alpha = ((val&fmt->Amask)>>fmt->Ashift)<<fmt->Aloss;
-    ret = Color::create(red, green, blue, alpha);
-  }
+  Uint32 *pixel =
+    (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
+  Uint8 red, green, blue, alpha;
+  SDL_GetRGBA(*pixel, surface->format, &red, &green, &blue, &alpha);
+  Color *ret = Color::create(red, green, blue, alpha);
   SDL_UnlockSurface(surface);
   return ret;
 }
 void Bitmap::set_pixel(int x, int y, Color *color) {
-  fprintf(stderr, "TODO: Bitmap::set_pixel\n");
+  SDL_LockSurface(surface);
+  Uint32 *pixel =
+    (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
+  *pixel = SDL_MapRGBA(
+      surface->format,
+      color->red, color->green, color->blue, color->alpha);
+  SDL_UnlockSurface(surface);
 }
 void Bitmap::hue_change(int hue) {
   fprintf(stderr, "TODO: Bitmap::hue_change\n");
@@ -210,15 +345,6 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
     SDL_DestroyRenderer(renderer);
     return;
   }
-  SDL_Texture *text_texture = SDL_CreateTextureFromSurface(
-      renderer, text_surface);
-  if(!text_texture) {
-    fprintf(stderr,
-        "Can't get texture of rendered text: %s\n", SDL_GetError());
-    SDL_FreeSurface(text_surface);
-    SDL_DestroyRenderer(renderer);
-    return;
-  }
   SDL_Rect dst_rect;
   int w = text_surface->w;
   if(w >= width) {
@@ -233,18 +359,16 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   dst_rect.y = y + (height-text_surface->h)/2;
   dst_rect.w = w;
   dst_rect.h = text_surface->h;
-  SDL_SetTextureAlphaMod(text_texture, 255);
-  // TODO: correct blend mode needed
-  // SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_BLEND);
-  SDL_SetTextureBlendMode(text_texture, SDL_BLENDMODE_NONE);
-  SDL_RenderCopy(renderer, text_texture, NULL, &dst_rect);
-  SDL_DestroyTexture(text_texture);
+  ::stretch_blt(
+      surface,
+      dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h,
+      text_surface,
+      0, 0, text_surface->w, text_surface->h, 255);
   SDL_FreeSurface(text_surface);
   SDL_DestroyRenderer(renderer);
   if(this->texture) {
-    SDL_Rect rect = {0, 0, surface->w, surface->h};
     SDL_UpdateTexture(
-        this->texture, &rect, this->surface->pixels, this->surface->pitch);
+        this->texture, NULL, this->surface->pixels, this->surface->pitch);
   }
 }
 void Bitmap::draw_text(Rect *rect, const char *str,
