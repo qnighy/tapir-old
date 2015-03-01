@@ -38,7 +38,9 @@ struct Window {
   static Window *create(int x, int y, int width, int height);
   static Window *create();
 
-  void render(SDL_Renderer *renderer);
+  void render(
+      SDL_Renderer *renderer,
+      int rox, int roy, int rwidth, int rheight);
 };
 
 extern VALUE rb_cWindow;

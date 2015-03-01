@@ -30,22 +30,25 @@ void Graphics::sort_renderables(std::vector<Renderable*> *rs) {
       return a->renderable_id < b->renderable_id;
   });
 }
-void Graphics::render_renderable(Renderable *r, SDL_Renderer *renderer) {
+void Graphics::render_renderable(
+    Renderable *r, SDL_Renderer *renderer,
+    int rox, int roy, int rwidth, int rheight) {
   switch(r->type) {
     case RenderableType::SPRITE:
-      ((Sprite*)r)->render(renderer);
+      ((Sprite*)r)->render(renderer, rox, roy, rwidth, rheight);
       break;
     case RenderableType::VIEWPORT:
-      ((Viewport*)r)->render(renderer);
+      ((Viewport*)r)->render(renderer, rox, roy, rwidth, rheight);
       break;
     case RenderableType::WINDOW:
-      ((Window*)r)->render(renderer);
+      ((Window*)r)->render(renderer, rox, roy, rwidth, rheight);
       break;
     case RenderableType::TILEMAP:
-      ((Tilemap*)r)->render(renderer, false);
+      ((Tilemap*)r)->render(renderer, rox, roy, rwidth, rheight, false);
       break;
     case RenderableType::TILEMAP_SUB:
-      ((TilemapSub*)r)->parent->render(renderer, true);
+      ((TilemapSub*)r)->parent->render(
+        renderer, rox, roy, rwidth, rheight, true);
       break;
     default:
       break;
@@ -134,8 +137,12 @@ VALUE rb_graphics_update(VALUE) {
   SDL_RenderFillRect(mainWindowRenderer, NULL);
   Graphics::sort_renderables(global_renderables);
   for(Renderable *r : *global_renderables) {
-    Graphics::render_renderable(r, mainWindowRenderer);
+    Graphics::render_renderable(
+        r, mainWindowRenderer, 0, 0, Graphics::width, Graphics::height);
   }
+  SDL_SetRenderDrawColor(
+      mainWindowRenderer, 0, 0, 0, 255-Graphics::brightness);
+  SDL_RenderFillRect(mainWindowRenderer, NULL);
   SDL_RenderPresent(mainWindowRenderer);
   time2 += update_counter();
   {
@@ -175,18 +182,20 @@ VALUE rb_graphics_wait(VALUE self, VALUE duration) {
   return Qnil;
 }
 VALUE rb_graphics_fadeout(VALUE self, VALUE duration) {
-  fprintf(stderr, "TODO: Graphics::fadeout\n");
   int duration_int = NUM2INT(duration);
+  int old_brightness = Graphics::brightness;
   for(int i = 0; i < duration_int; ++i) {
+    Graphics::brightness = old_brightness*(duration_int-i)/duration;
     rb_graphics_update(self);
   }
   Graphics::brightness = 0;
   return Qnil;
 }
 VALUE rb_graphics_fadein(VALUE self, VALUE duration) {
-  fprintf(stderr, "TODO: Graphics::fadein\n");
   int duration_int = NUM2INT(duration);
+  int old_brightness = 255-Graphics::brightness;
   for(int i = 0; i < duration_int; ++i) {
+    Graphics::brightness = 255-old_brightness*(duration_int-i)/duration;
     rb_graphics_update(self);
   }
   Graphics::brightness = 255;

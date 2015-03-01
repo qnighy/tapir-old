@@ -60,7 +60,9 @@ int Sprite::height() {
   return this->src_rect->height;
 }
 
-void Sprite::render(SDL_Renderer *renderer) {
+void Sprite::render(
+    SDL_Renderer *renderer,
+    int rox, int roy, int rwidth, int rheight) {
   if(!this->visible || !this->bitmap) return;
   // fprintf(stderr, "render!\n");
   SDL_Rect src_rect_orig;
@@ -76,8 +78,8 @@ void Sprite::render(SDL_Renderer *renderer) {
   SDL_Rect src_rect;
   SDL_IntersectRect(&src_rect_orig, &img_rect, &src_rect);
   SDL_Rect dst_rect;
-  dst_rect.x = x-ox*zoom_x;
-  dst_rect.y = y-oy*zoom_y;
+  dst_rect.x = x-ox*zoom_x-rox;
+  dst_rect.y = y-oy*zoom_y-roy;
   dst_rect.w = src_rect.w*zoom_x;
   dst_rect.h = src_rect.h*zoom_y;
   SDL_Texture *texture = this->bitmap->createTexture(renderer);

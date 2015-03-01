@@ -38,7 +38,9 @@ struct Tilemap {
 
   static Tilemap *create(Viewport *viewport = nullptr);
 
-  void render(SDL_Renderer *renderer, bool is_sub);
+  void render(
+      SDL_Renderer *renderer,
+      int rox, int roy, int rwidth, int rheight, bool is_sub);
 };
 
 extern VALUE rb_cTilemap;

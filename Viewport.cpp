@@ -46,17 +46,21 @@ void Viewport::update() {
   // TODO: Viewport::update
 }
 
-void Viewport::render(SDL_Renderer *renderer) {
-  SDL_Rect vp_rect;
-  vp_rect.x = rect->x;
-  vp_rect.y = rect->y;
-  vp_rect.w = rect->width;
-  vp_rect.h = rect->height;
-  SDL_RenderSetViewport(renderer, &vp_rect);
+void Viewport::render(
+    SDL_Renderer *renderer,
+    int rox, int roy, int rwidth, int rheight) {
+  SDL_Rect clip_rect;
+  clip_rect.x = rect->x;
+  clip_rect.y = rect->y;
+  clip_rect.w = rect->width;
+  clip_rect.h = rect->height;
+  SDL_RenderSetClipRect(renderer, &clip_rect);
+  SDL_RenderSetViewport(renderer, &clip_rect);
   Graphics::sort_renderables(renderables);
   for(Renderable *r : *renderables) {
-    Graphics::render_renderable(r, renderer);
+    Graphics::render_renderable(r, renderer, ox, oy, rect->width, rect->height);
   }
+  SDL_RenderSetClipRect(renderer, NULL);
   SDL_RenderSetViewport(renderer, NULL);
 }
 

@@ -40,7 +40,9 @@ struct Sprite {
 
   static Sprite *create(Viewport *viewport = nullptr);
 
-  void render(SDL_Renderer *renderer);
+  void render(
+      SDL_Renderer *renderer,
+      int rox, int roy, int rwidth, int rheight);
 };
 
 extern VALUE rb_cSprite;

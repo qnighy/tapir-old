@@ -65,7 +65,9 @@ bool Window::close_p() {
   return this->openness == 0;
 }
 
-void Window::render(SDL_Renderer *renderer) {
+void Window::render(
+    SDL_Renderer *renderer,
+    int rox, int roy, int rwidth, int rheight) {
   if(!this->visible) return;
   // TODO: Window::render
   // fprintf(stderr, "render!\n");
@@ -78,8 +80,8 @@ void Window::render(SDL_Renderer *renderer) {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, this->back_opacity);
     SDL_Rect rect;
-    rect.x = x+2;
-    rect.y = y+2;
+    rect.x = x-rox+2;
+    rect.y = y-roy+2;
     rect.w = width-4;
     rect.h = height-4;
     SDL_RenderFillRect(renderer, &rect);
@@ -93,8 +95,8 @@ void Window::render(SDL_Renderer *renderer) {
 
   {
     SDL_Rect cursor_rect;
-    cursor_rect.x = x+padding-ox+this->cursor_rect->x;
-    cursor_rect.y = y+padding-oy+this->cursor_rect->y;
+    cursor_rect.x = x-rox+padding-ox+this->cursor_rect->x;
+    cursor_rect.y = y-roy+padding-oy+this->cursor_rect->y;
     cursor_rect.w = this->cursor_rect->width;
     cursor_rect.h = this->cursor_rect->height;
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -115,8 +117,8 @@ void Window::render(SDL_Renderer *renderer) {
   SDL_Rect src_rect;
   SDL_IntersectRect(&src_rect_orig, &img_rect, &src_rect);
   SDL_Rect dst_rect;
-  dst_rect.x = x+padding-ox+src_rect.x;
-  dst_rect.y = y+padding-oy+src_rect.y;
+  dst_rect.x = x-rox+padding-ox+src_rect.x;
+  dst_rect.y = y-roy+padding-oy+src_rect.y;
   dst_rect.w = src_rect.w;
   dst_rect.h = src_rect.h;
   SDL_Texture *texture = this->contents->createTexture(renderer);

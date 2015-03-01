@@ -37,7 +37,9 @@ struct Viewport {
   static Viewport *create(Rect *rect);
   static Viewport *create();
 
-  void render(SDL_Renderer *renderer);
+  void render(
+      SDL_Renderer *renderer,
+      int rox, int roy, int rwidth, int rheight);
 };
 
 extern VALUE rb_cViewport;

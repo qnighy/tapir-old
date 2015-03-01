@@ -79,7 +79,9 @@ static int autotilemap[4][96] = {
     15, 21, 13,  7, 15, 15, 23, 23, 21, 21, 15, 21, 23, 23, 23,  5,
      5,  5,  5,  5,  7,  7,  7,  7, 13, 13, 13, 13, 15, 15, 15, 15}};
 
-void Tilemap::render(SDL_Renderer *renderer, bool is_sub) {
+void Tilemap::render(
+    SDL_Renderer *renderer,
+    int rox, int roy, int rwidth, int rheight, bool is_sub) {
   if(!this->visible || !this->map_data) return;
   int ysize = this->map_data->ysize;
   int xsize = this->map_data->xsize;
@@ -242,8 +244,8 @@ void Tilemap::render(SDL_Renderer *renderer, bool is_sub) {
     if(is_sub && j < 4) continue;
     if(!is_sub && j >= 4) continue;
     SDL_Rect dst_rect;
-    dst_rect.x = -ox;
-    dst_rect.y = -oy;
+    dst_rect.x = -ox-rox;
+    dst_rect.y = -oy-roy;
     dst_rect.w = xsize*32;
     dst_rect.h = ysize*32;
     SDL_RenderCopy(renderer, textures[0][j], NULL, &dst_rect);

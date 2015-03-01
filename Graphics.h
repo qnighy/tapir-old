@@ -18,7 +18,9 @@ struct Graphics {
   static void unregister_renderable(Renderable *r, Viewport *v);
 
   static void sort_renderables(std::vector<Renderable*> *rs);
-  static void render_renderable(Renderable *r, SDL_Renderer *renderer);
+  static void render_renderable(
+      Renderable *r, SDL_Renderer *renderer,
+      int rox, int roy, int rwidth, int rheight);
 };
 
 extern VALUE rb_mGraphics;
