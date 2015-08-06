@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 PC_LIBS = sdl2 SDL2_image SDL2_ttf
+RUBY_SRC_DIR = $(shell readlink -f ../ruby192)
 RUBY_DIR = $(shell readlink -f ../ruby192-build)
 
 CC = g++
@@ -16,6 +17,7 @@ LDFLAGS = \
 	  -L$(RUBY_DIR)/lib \
 	  $(shell pkg-config $(PC_LIBS) --libs-only-L --libs-only-other)
 LDLIBS = \
+	 $(RUBY_SRC_DIR)/ext/zlib/zlib.a -lz \
 	 -lruby-static -lpthread -lrt -ldl -lcrypt -lm \
 	 $(shell pkg-config $(PC_LIBS) --libs-only-l)
 

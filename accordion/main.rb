@@ -1,4 +1,4 @@
-require "zlib"
+# require "zlib"
 
 class Plane
   def initialize(viewport = nil)
