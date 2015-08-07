@@ -4,6 +4,8 @@ PC_LIBS = sdl2 SDL2_image SDL2_ttf
 RUBY_SRC_DIR = $(shell readlink -f ../ruby192)
 RUBY_DIR = $(shell readlink -f ../ruby192-build)
 
+TEST_GAME_DIR = ../games/Sakusaku
+
 CC = g++
 CFLAGS = -std=c11 -O2 -Wall -Wextra -g \
 	 $(shell pkg-config $(PC_LIBS) --cflags-only-other)
@@ -21,7 +23,7 @@ LDLIBS = \
 	 -lruby-static -lpthread -lrt -ldl -lcrypt -lm \
 	 $(shell pkg-config $(PC_LIBS) --libs-only-l)
 
-EXEC = main
+EXEC = tapir
 OBJS = main.o main_rb.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
        Bitmap.o Color.o Font.o Rect.o Sprite.o \
        Table.o Tilemap.o Tone.o Viewport.o \
@@ -35,12 +37,14 @@ clean:
 	$(RM) $(EXEC) $(OBJS) $(wildcard *.d)
 
 run: all
-	./$(EXEC)
+	cp $(EXEC) $(TEST_GAME_DIR)
+	cd $(TEST_GAME_DIR); ./$(EXEC)
 
 run-valgrind: all
-	valgrind --undef-value-errors=no ./$(EXEC)
+	cp $(EXEC) $(TEST_GAME_DIR)
+	cd $(TEST_GAME_DIR); valgrind --undef-value-errors=no ./$(EXEC)
 
-main: $(OBJS)
+tapir: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 %.o: %.cpp

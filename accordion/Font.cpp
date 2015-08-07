@@ -2,6 +2,7 @@
 
 #include "Font.h"
 #include "misc.h"
+#include "file_misc.h"
 
 void Font::initialize(VALUE name, int size) {
   this->name = name;
@@ -173,8 +174,8 @@ void InitFont() {
   rb_gc_register_address(&Font::default_out_color->rb_parent);
 
   for(std::string fname :
-      {"/home/qnighy/workdir/vxace/RTP/RPGVXAce/Fonts/VL-Gothic-Regular.ttf",
-       "/home/qnighy/workdir/vxace/RTP/RPGVXAce/Fonts/VL-PGothic-Regular.ttf"}
+      {std::string(rtp_path) + "/Fonts/VL-Gothic-Regular.ttf",
+       std::string(rtp_path) + "/Fonts/VL-PGothic-Regular.ttf"}
       ) {
     TTF_Font *font = TTF_OpenFont(fname.c_str(), 24);
     Font::family_names[TTF_FontFaceFamilyName(font)] = fname;

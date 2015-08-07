@@ -9,9 +9,12 @@
 #include <ruby.h>
 
 #include "file_misc.h"
+#include "rtp_config.h"
 
-const char *game_path = "/home/qnighy/workdir/vxace/SakusakuEnc";
-const char *rtp_path = "/home/qnighy/workdir/vxace/RTP/RPGVXAce";
+// TODO: how to decide gamepath
+// const char *game_path = "/path/to/game";
+// TODO: how to retrieve RTP name
+const char *rtp_path = RTPDIR "RPGVXAce";
 
 struct ArchiveEntry {
   uint32_t key;
@@ -27,7 +30,7 @@ static std::map<std::string, ArchiveEntry> archive_entries;
 static VALUE rb_load_data(VALUE self, VALUE path);
 
 void InitFileMisc() {
-  chdir(game_path);
+  // chdir(game_path);
   archive = SDL_RWFromFile("Game.rgss3a", "rb");
   if(archive) {
     char header[8];

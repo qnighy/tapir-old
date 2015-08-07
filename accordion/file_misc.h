@@ -4,7 +4,7 @@
 #include <string>
 #include <SDL.h>
 
-extern const char *game_path;
+// extern const char *game_path;
 extern const char *rtp_path;
 
 void InitFileMisc();
