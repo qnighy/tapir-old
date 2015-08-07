@@ -22,7 +22,7 @@ LDLIBS = \
 	 $(shell pkg-config $(PC_LIBS) --libs-only-l)
 
 EXEC = main
-OBJS = main.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
+OBJS = main.o main_rb.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
        Bitmap.o Color.o Font.o Rect.o Sprite.o \
        Table.o Tilemap.o Tone.o Viewport.o \
        Window.o Graphics.o Input.o RGSSReset.o
@@ -45,5 +45,8 @@ main: $(OBJS)
 
 %.o: %.cpp
 	$(CXX) -MMD $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+main_rb.cpp: main_gen.rb main.rb
+	ruby main_gen.rb main.rb > $@
 
 -include $(wildcard *.d)

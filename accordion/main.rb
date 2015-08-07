@@ -1,5 +1,3 @@
-# require "zlib"
-
 class Plane
   def initialize(viewport = nil)
     @bitmap = nil

@@ -18,13 +18,14 @@
 #include "sdl_misc.h"
 #include "file_misc.h"
 #include "rpg_rb.h"
+#include "main_rb.h"
 
 extern "C" void Init_zlib(void);
 
 RUBY_GLOBAL_SETUP
 
 static VALUE rescued_main(VALUE) {
-  rb_eval_string("load '/home/qnighy/workdir/tapir/accordion/main.rb'");
+  Init_main();
   return Qnil;
 }
 
