@@ -68,6 +68,7 @@ end
 def rgss_main
   yield
 rescue RGSSReset
+  GC.start
   retry
 end
 
