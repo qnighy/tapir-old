@@ -19,7 +19,7 @@ struct Viewport {
   Rect *rect;
   bool visible;
   int z, ox, oy;
-  Color *color;
+  VALUE color;
   Tone *tone;
 
   bool is_disposed;
@@ -30,7 +30,7 @@ struct Viewport {
   void initialize();
   void dispose();
   bool disposed();
-  void flash(Color *color, int duration);
+  void flash(VALUE color, int duration);
   void update();
 
   static Viewport *create(int x, int y, int width, int height);

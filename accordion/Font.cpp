@@ -11,10 +11,10 @@ void Font::initialize(VALUE name, int size) {
   this->italic = default_italic;
   this->shadow = default_shadow;
   this->outline = default_outline;
-  this->color = Color::create();
-  this->out_color = Color::create();
-  this->color->set(default_color);
-  this->out_color->set(default_out_color);
+  this->color = rb_color_new2();
+  this->out_color = rb_color_new2();
+  rb_color_set2(this->color, default_color);
+  rb_color_set2(this->out_color, default_out_color);
 }
 void Font::set(Font *font) {
   this->name = font->name;
@@ -23,8 +23,8 @@ void Font::set(Font *font) {
   this->italic = font->italic;
   this->shadow = font->shadow;
   this->outline = font->outline;
-  this->color->set(font->color);
-  this->out_color->set(font->out_color);
+  rb_color_set2(this->color, font->color);
+  rb_color_set2(this->out_color, font->out_color);
 }
 
 bool Font::exist(VALUE name) {
@@ -36,7 +36,7 @@ VALUE Font::default_name;
 int Font::default_size;
 bool Font::default_bold, Font::default_italic;
 bool Font::default_shadow, Font::default_outline;
-Color *Font::default_color, *Font::default_out_color;
+VALUE Font::default_color, Font::default_out_color;
 
 std::map<std::string, std::string> Font::family_names;
 std::map<std::pair<std::string, int>, TTF_Font*> Font::font_caches;
@@ -168,10 +168,10 @@ void InitFont() {
   Font::default_italic = false;
   Font::default_shadow = false;
   Font::default_outline = true;
-  Font::default_color = Color::create(255.0, 255.0, 255.0, 255.0);
-  Font::default_out_color = Color::create(0.0, 0.0, 0.0, 128.0);
-  rb_gc_register_address(&Font::default_color->rb_parent);
-  rb_gc_register_address(&Font::default_out_color->rb_parent);
+  Font::default_color = rb_color_new(255.0, 255.0, 255.0, 255.0);
+  Font::default_out_color = rb_color_new(0.0, 0.0, 0.0, 128.0);
+  rb_gc_register_address(&Font::default_color);
+  rb_gc_register_address(&Font::default_out_color);
 
   for(std::string fname :
       {std::string(rtp_path) + "/Fonts/VL-Gothic-Regular.ttf",
@@ -243,15 +243,15 @@ TTF_Font *Font::createTTFFont() {
 
 static void font_mark(Font *ptr) {
   rb_gc_mark(ptr->name);
-  rb_gc_mark(ptr->color->rb_parent);
-  rb_gc_mark(ptr->out_color->rb_parent);
+  rb_gc_mark(ptr->color);
+  rb_gc_mark(ptr->out_color);
 }
 
 static VALUE font_alloc(VALUE klass) {
   Font *ptr = ALLOC(Font);
   ptr->name = Qnil;
-  ptr->color = nullptr;
-  ptr->out_color = nullptr;
+  ptr->color = Qnil;
+  ptr->out_color = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, font_mark, -1, ptr);
   ptr->rb_parent = ret;
   return ret;
@@ -285,8 +285,8 @@ static VALUE rb_font_initialize_copy(VALUE self, VALUE orig) {
   ptr->italic = orig_ptr->italic;
   ptr->shadow = orig_ptr->shadow;
   ptr->outline = orig_ptr->outline;
-  ptr->color->set(orig_ptr->color);
-  ptr->out_color->set(orig_ptr->out_color);
+  rb_color_set2(ptr->color, orig_ptr->color);
+  rb_color_set2(ptr->out_color, orig_ptr->out_color);
   return Qnil;
 }
 
@@ -351,20 +351,20 @@ static VALUE rb_font_set_outline(VALUE self, VALUE outline) {
 }
 static VALUE rb_font_color(VALUE self) {
   Font *ptr = convertFont(self);
-  return exportColor(ptr->color);
+  return ptr->color;
 }
 static VALUE rb_font_set_color(VALUE self, VALUE color) {
   Font *ptr = convertFont(self);
-  ptr->color->set(convertColor(color));
+  rb_color_set2(ptr->color, color);
   return color;
 }
 static VALUE rb_font_out_color(VALUE self) {
   Font *ptr = convertFont(self);
-  return exportColor(ptr->out_color);
+  return ptr->out_color;
 }
 static VALUE rb_font_set_out_color(VALUE self, VALUE out_color) {
   Font *ptr = convertFont(self);
-  ptr->out_color->set(convertColor(out_color));
+  rb_color_set2(ptr->out_color, out_color);
   return out_color;
 }
 
@@ -411,16 +411,16 @@ static VALUE rb_font_set_default_outline(VALUE, VALUE default_outline) {
   return default_outline;
 }
 static VALUE rb_font_default_color(VALUE) {
-  return exportColor(Font::default_color);
+  return Font::default_color;
 }
 static VALUE rb_font_set_default_color(VALUE, VALUE default_color) {
-  Font::default_color->set(convertColor(default_color));
+  rb_color_set2(Font::default_color, default_color);
   return default_color;
 }
 static VALUE rb_font_default_out_color(VALUE) {
-  return exportColor(Font::default_out_color);
+  return Font::default_out_color;
 }
 static VALUE rb_font_set_default_out_color(VALUE, VALUE default_out_color) {
-  Font::default_out_color->set(convertColor(default_out_color));
+  rb_color_set2(Font::default_out_color, default_out_color);
   return default_out_color;
 }

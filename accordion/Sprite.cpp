@@ -28,7 +28,7 @@ void Sprite::initialize(Viewport *viewport) {
   this->bush_opacity = 128;
   this->opacity = 255;
   this->blend_type = 0;
-  this->color = Color::create();
+  this->color = rb_color_new2();
   this->tone = Tone::create();
 
   this->is_disposed = false;
@@ -47,7 +47,7 @@ void Sprite::dispose() {
 bool Sprite::disposed() {
   return this->is_disposed;
 }
-void Sprite::flash(Color *color, int duration) {
+void Sprite::flash(VALUE color, int duration) {
   fprintf(stderr, "TODO: Sprite::flash\n");
 }
 void Sprite::update() {
@@ -98,7 +98,7 @@ void Sprite::render(
   if(bush_depth != 0) {
     fprintf(stderr, "TODO: Sprite::render: bush_depth\n");
   }
-  if(color->alpha != 0.0) {
+  if(rb_color_alpha(color) != 0.0) {
     // fprintf(stderr, "TODO: Sprite::render: color\n");
   }
   if(tone->red != 0.0 || tone->green != 0.0 ||
@@ -328,7 +328,7 @@ static void sprite_mark(Sprite *ptr) {
   if(ptr->bitmap) rb_gc_mark(ptr->bitmap->rb_parent);
   rb_gc_mark(ptr->src_rect->rb_parent);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
-  rb_gc_mark(ptr->color->rb_parent);
+  rb_gc_mark(ptr->color);
   rb_gc_mark(ptr->tone->rb_parent);
 }
 
@@ -342,7 +342,7 @@ static VALUE sprite_alloc(VALUE klass) {
   ptr->bitmap = nullptr;
   ptr->src_rect = nullptr;
   ptr->viewport = nullptr;
-  ptr->color = nullptr;
+  ptr->color = Qnil;
   ptr->tone = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, sprite_mark, sprite_free, ptr);
   ptr->rb_parent = ret;
@@ -389,7 +389,7 @@ static VALUE rb_sprite_disposed(VALUE self) {
 }
 static VALUE rb_sprite_flash(VALUE self, VALUE color, VALUE duration) {
   Sprite *ptr = convertSprite(self);
-  ptr->flash(convertColor(color), NUM2INT(duration));
+  ptr->flash(color, NUM2INT(duration));
   return Qnil;
 }
 static VALUE rb_sprite_update(VALUE self) {
@@ -602,11 +602,11 @@ static VALUE rb_sprite_set_blend_type(VALUE self, VALUE blend_type) {
 }
 static VALUE rb_sprite_color(VALUE self) {
   Sprite *ptr = convertSprite(self);
-  return exportColor(ptr->color);
+  return ptr->color;
 }
 static VALUE rb_sprite_set_color(VALUE self, VALUE color) {
   Sprite *ptr = convertSprite(self);
-  ptr->color->set(convertColor(color));
+  rb_color_set2(ptr->color, color);
   return color;
 }
 static VALUE rb_sprite_tone(VALUE self) {

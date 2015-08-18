@@ -52,7 +52,7 @@ int main(int, char **) {
     InitRPG();
 
     InitBitmap();
-    InitColor();
+    Init_Color();
     InitFont();
     InitRect();
     InitSprite();

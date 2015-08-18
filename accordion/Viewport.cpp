@@ -12,7 +12,7 @@ void Viewport::initialize(int x, int y, int width, int height) {
   this->z = 0;
   this->ox = 0;
   this->oy = 0;
-  this->color = Color::create();
+  this->color = rb_color_new2();
   this->tone = Tone::create();
 
   this->is_disposed = false;
@@ -39,7 +39,7 @@ void Viewport::dispose() {
 bool Viewport::disposed() {
   return this->is_disposed;
 }
-void Viewport::flash(Color *color, int duration) {
+void Viewport::flash(VALUE color, int duration) {
   fprintf(stderr, "TODO: Viewport::flash\n");
 }
 void Viewport::update() {
@@ -185,7 +185,7 @@ Viewport *Viewport::create() {
 
 static void viewport_mark(Viewport *ptr) {
   rb_gc_mark(ptr->rect->rb_parent);
-  rb_gc_mark(ptr->color->rb_parent);
+  rb_gc_mark(ptr->color);
   rb_gc_mark(ptr->tone->rb_parent);
 }
 
@@ -200,7 +200,7 @@ static void viewport_free(Viewport *ptr) {
 static VALUE viewport_alloc(VALUE klass) {
   Viewport *ptr = ALLOC(Viewport);
   ptr->rect = nullptr;
-  ptr->color = nullptr;
+  ptr->color = Qnil;
   ptr->tone = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, viewport_mark, viewport_free, ptr);
   ptr->rb_parent = ret;
@@ -252,7 +252,7 @@ static VALUE rb_viewport_disposed(VALUE self) {
 }
 static VALUE rb_viewport_flash(VALUE self, VALUE color, VALUE duration) {
   Viewport *ptr = convertViewport(self);
-  ptr->flash(convertColor(color), NUM2INT(duration));
+  ptr->flash(color, NUM2INT(duration));
   return Qnil;
 }
 static VALUE rb_viewport_update(VALUE self) {
@@ -309,11 +309,11 @@ static VALUE rb_viewport_set_oy(VALUE self, VALUE oy) {
 }
 static VALUE rb_viewport_color(VALUE self) {
   Viewport *ptr = convertViewport(self);
-  return exportColor(ptr->color);
+  return ptr->color;
 }
 static VALUE rb_viewport_set_color(VALUE self, VALUE color) {
   Viewport *ptr = convertViewport(self);
-  ptr->color->set(convertColor(color));
+  rb_color_set2(ptr->color, color);
   return color;
 }
 static VALUE rb_viewport_tone(VALUE self) {

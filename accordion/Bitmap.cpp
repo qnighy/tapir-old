@@ -183,15 +183,15 @@ void Bitmap::stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
     SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
+void Bitmap::fill_rect(int x, int y, int width, int height, VALUE color) {
   int x1 = std::max(x, 0);
   int y1 = std::max(y, 0);
   int x2 = std::min(x+width, surface->w);
   int y2 = std::min(y+height, surface->h);
-  double srcR = color->red / 255.0;
-  double srcG = color->green / 255.0;
-  double srcB = color->blue / 255.0;
-  double srcA = color->alpha / 255.0;
+  double srcR = rb_color_red(color) / 255.0;
+  double srcG = rb_color_green(color) / 255.0;
+  double srcB = rb_color_blue(color) / 255.0;
+  double srcA = rb_color_alpha(color) / 255.0;
   SDL_LockSurface(surface);
   for(int xx = x1; xx < x2; ++xx) {
     for(int yy = y1; yy < y2; ++yy) {
@@ -214,24 +214,24 @@ void Bitmap::fill_rect(int x, int y, int width, int height, Color *color) {
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::fill_rect(Rect *rect, Color *color) {
+void Bitmap::fill_rect(Rect *rect, VALUE color) {
   fill_rect(rect->x, rect->y, rect->width, rect->height, color);
 }
 void Bitmap::gradient_fill_rect(
-    int x, int y, int width, int height, Color *color1, Color *color2,
+    int x, int y, int width, int height, VALUE color1, VALUE color2,
     bool vertical) {
   int x1 = std::max(x, 0);
   int y1 = std::max(y, 0);
   int x2 = std::min(x+width, surface->w);
   int y2 = std::min(y+height, surface->h);
-  double src1R = color1->red / 255.0;
-  double src1G = color1->green / 255.0;
-  double src1B = color1->blue / 255.0;
-  double src1A = color1->alpha / 255.0;
-  double src2R = color2->red / 255.0;
-  double src2G = color2->green / 255.0;
-  double src2B = color2->blue / 255.0;
-  double src2A = color2->alpha / 255.0;
+  double src1R = rb_color_red(color1) / 255.0;
+  double src1G = rb_color_green(color1) / 255.0;
+  double src1B = rb_color_blue(color1) / 255.0;
+  double src1A = rb_color_alpha(color1) / 255.0;
+  double src2R = rb_color_red(color2) / 255.0;
+  double src2G = rb_color_green(color2) / 255.0;
+  double src2B = rb_color_blue(color2) / 255.0;
+  double src2A = rb_color_alpha(color2) / 255.0;
   SDL_LockSurface(surface);
   for(int xx = x1; xx < x2; ++xx) {
     for(int yy = y1; yy < y2; ++yy) {
@@ -261,7 +261,7 @@ void Bitmap::gradient_fill_rect(
   }
 }
 void Bitmap::gradient_fill_rect(
-    Rect *rect, Color *color1, Color *color2,
+    Rect *rect, VALUE color1, VALUE color2,
     bool vertical) {
   gradient_fill_rect(
       rect->x, rect->y, rect->width, rect->height,
@@ -296,23 +296,26 @@ void Bitmap::clear_rect(int x, int y, int width, int height) {
 void Bitmap::clear_rect(Rect *rect) {
   clear_rect(rect->x, rect->y, rect->width, rect->height);
 }
-Color *Bitmap::get_pixel(int x, int y) {
+VALUE Bitmap::get_pixel(int x, int y) {
   SDL_LockSurface(surface);
   Uint32 *pixel =
     (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
   Uint8 red, green, blue, alpha;
   SDL_GetRGBA(*pixel, surface->format, &red, &green, &blue, &alpha);
-  Color *ret = Color::create(red, green, blue, alpha);
+  VALUE ret = rb_color_new(red, green, blue, alpha);
   SDL_UnlockSurface(surface);
   return ret;
 }
-void Bitmap::set_pixel(int x, int y, Color *color) {
+void Bitmap::set_pixel(int x, int y, VALUE color) {
   SDL_LockSurface(surface);
   Uint32 *pixel =
     (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
   *pixel = SDL_MapRGBA(
       surface->format,
-      color->red, color->green, color->blue, color->alpha);
+      rb_color_red(color),
+      rb_color_green(color),
+      rb_color_blue(color),
+      rb_color_alpha(color));
   SDL_UnlockSurface(surface);
 }
 void Bitmap::hue_change(int hue) {
@@ -334,10 +337,10 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
   }
   SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
   SDL_Color color;
-  color.r = this->font->color->red;
-  color.g = this->font->color->green;
-  color.b = this->font->color->blue;
-  color.a = this->font->color->alpha;
+  color.r = rb_color_red(this->font->color);
+  color.g = rb_color_green(this->font->color);
+  color.b = rb_color_blue(this->font->color);
+  color.a = rb_color_alpha(this->font->color);
   SDL_Surface *text_surface = TTF_RenderUTF8_Blended(
       font, str, color);
   if(!text_surface) {
@@ -623,11 +626,11 @@ static VALUE rb_bitmap_fill_rect(int argc, VALUE *argv, VALUE self) {
     case 5:
       ptr->fill_rect(
           NUM2INT(argv[0]), NUM2INT(argv[1]), NUM2INT(argv[2]),
-          NUM2INT(argv[3]), convertColor(argv[4]));
+          NUM2INT(argv[3]), argv[4]);
       break;
     case 2:
       ptr->fill_rect(
-          convertRect(argv[0]), convertColor(argv[1]));
+          convertRect(argv[0]), argv[1]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -642,23 +645,20 @@ static VALUE rb_bitmap_gradient_fill_rect(int argc, VALUE *argv, VALUE self) {
     case 7:
       ptr->gradient_fill_rect(
           NUM2INT(argv[0]), NUM2INT(argv[1]), NUM2INT(argv[2]),
-          NUM2INT(argv[3]), convertColor(argv[4]), convertColor(argv[5]),
+          NUM2INT(argv[3]), argv[4], argv[5],
           RTEST(argv[6]));
       break;
     case 6:
       ptr->gradient_fill_rect(
           NUM2INT(argv[0]), NUM2INT(argv[1]), NUM2INT(argv[2]),
-          NUM2INT(argv[3]), convertColor(argv[4]), convertColor(argv[5]));
+          NUM2INT(argv[3]), argv[4], argv[5]);
       break;
     case 4:
       ptr->gradient_fill_rect(
-          convertRect(argv[0]), convertColor(argv[1]),
-          convertColor(argv[2]), RTEST(argv[3]));
+          convertRect(argv[0]), argv[1], argv[2], RTEST(argv[3]));
       break;
     case 3:
-      ptr->gradient_fill_rect(
-          convertRect(argv[0]), convertColor(argv[1]),
-          convertColor(argv[2]));
+      ptr->gradient_fill_rect(convertRect(argv[0]), argv[1], argv[2]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -693,12 +693,12 @@ static VALUE rb_bitmap_clear_rect(int argc, VALUE *argv, VALUE self) {
 
 static VALUE rb_bitmap_get_pixel(VALUE self, VALUE x, VALUE y) {
   Bitmap *ptr = convertBitmap(self);
-  return exportColor(ptr->get_pixel(NUM2INT(x), NUM2INT(y)));
+  return ptr->get_pixel(NUM2INT(x), NUM2INT(y));
 }
 
 static VALUE rb_bitmap_set_pixel(VALUE self, VALUE x, VALUE y, VALUE color) {
   Bitmap *ptr = convertBitmap(self);
-  ptr->set_pixel(NUM2INT(x), NUM2INT(y), convertColor(color));
+  ptr->set_pixel(NUM2INT(x), NUM2INT(y), color);
   return color;
 }
 static VALUE rb_bitmap_hue_change(VALUE self, VALUE hue) {

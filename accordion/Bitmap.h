@@ -25,19 +25,19 @@ struct Bitmap {
       int opacity = 255);
   void stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
       int opacity = 255);
-  void fill_rect(int x, int y, int width, int height, Color *color);
-  void fill_rect(Rect *rect, Color *color);
+  void fill_rect(int x, int y, int width, int height, VALUE color);
+  void fill_rect(Rect *rect, VALUE color);
   void gradient_fill_rect(
-      int x, int y, int width, int height, Color *color1, Color *color2,
+      int x, int y, int width, int height, VALUE color1, VALUE color2,
       bool vertical = false);
   void gradient_fill_rect(
-      Rect *rect, Color *color1, Color *color2,
+      Rect *rect, VALUE color1, VALUE color2,
       bool vertical = false);
   void clear();
   void clear_rect(int x, int y, int width, int height);
   void clear_rect(Rect *rect);
-  Color *get_pixel(int x, int y);
-  void set_pixel(int x, int y, Color *color);
+  VALUE get_pixel(int x, int y);
+  void set_pixel(int x, int y, VALUE color);
   void hue_change(int hue);
   void blur();
   void radial_blur(int angle, int division);
