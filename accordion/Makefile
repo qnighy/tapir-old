@@ -44,6 +44,10 @@ run-valgrind: all
 	cp $(EXEC) $(TEST_GAME_DIR)
 	cd $(TEST_GAME_DIR); valgrind --undef-value-errors=no ./$(EXEC)
 
+run-gdb: all
+	cp $(EXEC) $(TEST_GAME_DIR)
+	cd $(TEST_GAME_DIR); gdb -ex='dir ../../accordion' -ex='dir ../../ruby192' ./$(EXEC)
+
 tapir: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
