@@ -12,10 +12,10 @@ static VALUE color_alloc(VALUE klass);
 VALUE rb_color_new(double red, double green, double blue, double alpha) {
   VALUE ret = color_alloc(rb_cColor);
   Color *ptr = convertColor(ret);
-  ptr->red = saturate(red, 0.0, 255.0);
-  ptr->green = saturate(green, 0.0, 255.0);
-  ptr->blue = saturate(blue, 0.0, 255.0);
-  ptr->alpha = saturate(alpha, 0.0, 255.0);
+  ptr->red = saturateDouble(red, 0.0, 255.0);
+  ptr->green = saturateDouble(green, 0.0, 255.0);
+  ptr->blue = saturateDouble(blue, 0.0, 255.0);
+  ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
   return ret;
 }
 VALUE rb_color_new2() {
@@ -25,10 +25,10 @@ VALUE rb_color_new2() {
 void rb_color_set(
     VALUE self, double red, double green, double blue, double alpha) {
   Color *ptr = convertColor(self);
-  ptr->red = saturate(red, 0.0, 255.0);
-  ptr->green = saturate(green, 0.0, 255.0);
-  ptr->blue = saturate(blue, 0.0, 255.0);
-  ptr->alpha = saturate(alpha, 0.0, 255.0);
+  ptr->red = saturateDouble(red, 0.0, 255.0);
+  ptr->green = saturateDouble(green, 0.0, 255.0);
+  ptr->blue = saturateDouble(blue, 0.0, 255.0);
+  ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
 }
 
 void rb_color_set2(VALUE self, VALUE other) {
@@ -262,10 +262,10 @@ static VALUE rb_color_m_old_load(VALUE, VALUE str) {
   Color *ptr = convertColor(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
-  ptr->red = saturate(readDouble(s), 0.0, 255.0);
-  ptr->green = saturate(readDouble(s+8), 0.0, 255.0);
-  ptr->blue = saturate(readDouble(s+16), 0.0, 255.0);
-  ptr->alpha = saturate(readDouble(s+24), 0.0, 255.0);
+  ptr->red = saturateDouble(readDouble(s), 0.0, 255.0);
+  ptr->green = saturateDouble(readDouble(s+8), 0.0, 255.0);
+  ptr->blue = saturateDouble(readDouble(s+16), 0.0, 255.0);
+  ptr->alpha = saturateDouble(readDouble(s+24), 0.0, 255.0);
   return ret;
 }
 static VALUE rb_color_m_old_dump(VALUE self, VALUE) {

@@ -4,8 +4,13 @@
 double readDouble(const char *ptr);
 void writeDouble(char *ptr, double val);
 
-template<typename T>
-T saturate(T val, T minval, T maxval) {
+inline int saturateInt(int val, int minval, int maxval) {
+  if(val <= minval) return minval;
+  if(val >= maxval) return maxval;
+  return val;
+}
+
+inline int saturateDouble(double val, double minval, double maxval) {
   if(val <= minval) return minval;
   if(val >= maxval) return maxval;
   return val;

@@ -2,10 +2,10 @@
 #include "misc.h"
 
 void Tone::initialize(double red, double green, double blue, double gray) {
-  this->red = saturate(red, -255.0, 255.0);
-  this->green = saturate(green, -255.0, 255.0);
-  this->blue = saturate(blue, -255.0, 255.0);
-  this->gray = saturate(gray, 0.0, 255.0);
+  this->red = saturateDouble(red, -255.0, 255.0);
+  this->green = saturateDouble(green, -255.0, 255.0);
+  this->blue = saturateDouble(blue, -255.0, 255.0);
+  this->gray = saturateDouble(gray, 0.0, 255.0);
 }
 void Tone::initialize() {
   this->red = 0.0;
@@ -14,10 +14,10 @@ void Tone::initialize() {
   this->gray = 0.0;
 }
 void Tone::set(double red, double green, double blue, double gray) {
-  this->red = saturate(red, -255.0, 255.0);
-  this->green = saturate(green, -255.0, 255.0);
-  this->blue = saturate(blue, -255.0, 255.0);
-  this->gray = saturate(gray, 0.0, 255.0);
+  this->red = saturateDouble(red, -255.0, 255.0);
+  this->green = saturateDouble(green, -255.0, 255.0);
+  this->blue = saturateDouble(blue, -255.0, 255.0);
+  this->gray = saturateDouble(gray, 0.0, 255.0);
 }
 void Tone::set(Tone *tone) {
   this->red = tone->red;
@@ -188,7 +188,7 @@ static VALUE rb_tone_red(VALUE self) {
 }
 static VALUE rb_tone_set_red(VALUE self, VALUE red) {
   Tone *ptr = convertTone(self);
-  ptr->red = saturate(NUM2DBL(red), -255.0, 255.0);
+  ptr->red = saturateDouble(NUM2DBL(red), -255.0, 255.0);
   return red;
 }
 static VALUE rb_tone_green(VALUE self) {
@@ -197,7 +197,7 @@ static VALUE rb_tone_green(VALUE self) {
 }
 static VALUE rb_tone_set_green(VALUE self, VALUE green) {
   Tone *ptr = convertTone(self);
-  ptr->green = saturate(NUM2DBL(green), -255.0, 255.0);
+  ptr->green = saturateDouble(NUM2DBL(green), -255.0, 255.0);
   return green;
 }
 static VALUE rb_tone_blue(VALUE self) {
@@ -206,7 +206,7 @@ static VALUE rb_tone_blue(VALUE self) {
 }
 static VALUE rb_tone_set_blue(VALUE self, VALUE blue) {
   Tone *ptr = convertTone(self);
-  ptr->blue = saturate(NUM2DBL(blue), -255.0, 255.0);
+  ptr->blue = saturateDouble(NUM2DBL(blue), -255.0, 255.0);
   return blue;
 }
 static VALUE rb_tone_gray(VALUE self) {
@@ -215,7 +215,7 @@ static VALUE rb_tone_gray(VALUE self) {
 }
 static VALUE rb_tone_set_gray(VALUE self, VALUE gray) {
   Tone *ptr = convertTone(self);
-  ptr->gray = saturate(NUM2DBL(gray), 0.0, 255.0);
+  ptr->gray = saturateDouble(NUM2DBL(gray), 0.0, 255.0);
   return gray;
 }
 static VALUE rb_tone_old_load(VALUE, VALUE str) {
@@ -223,10 +223,10 @@ static VALUE rb_tone_old_load(VALUE, VALUE str) {
   Tone *ptr = convertTone(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
-  ptr->red = saturate(readDouble(s), -255.0, 255.0);
-  ptr->green = saturate(readDouble(s+8), -255.0, 255.0);
-  ptr->blue = saturate(readDouble(s+16), -255.0, 255.0);
-  ptr->gray = saturate(readDouble(s+24), 0.0, 255.0);
+  ptr->red = saturateDouble(readDouble(s), -255.0, 255.0);
+  ptr->green = saturateDouble(readDouble(s+8), -255.0, 255.0);
+  ptr->blue = saturateDouble(readDouble(s+16), -255.0, 255.0);
+  ptr->gray = saturateDouble(readDouble(s+24), 0.0, 255.0);
   return ret;
 }
 static VALUE rb_tone_old_dump(VALUE self, VALUE) {
