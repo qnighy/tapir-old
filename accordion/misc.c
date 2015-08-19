@@ -1,4 +1,4 @@
-#include <cstdint>
+#include <stdint.h>
 
 #include "misc.h"
 
@@ -8,7 +8,7 @@ union u64d_converter {
 };
 
 double readDouble(const char *ptr) {
-  u64d_converter num;
+  union u64d_converter num;
   num.u64 =
     ((uint64_t)(unsigned char)ptr[0])|
     ((uint64_t)(unsigned char)ptr[1]<<8)|
@@ -21,7 +21,7 @@ double readDouble(const char *ptr) {
   return num.d;
 }
 void writeDouble(char *ptr, double val) {
-  u64d_converter num;
+  union u64d_converter num;
   num.d = val;
   ptr[0] = num.u64;
   ptr[1] = num.u64>>8;

@@ -6,7 +6,7 @@ RUBY_DIR = $(shell readlink -f ../ruby192-build)
 
 TEST_GAME_DIR = ../games/Sakusaku
 
-CC = g++
+CC = gcc
 CFLAGS = -std=c11 -O2 -Wall -Wextra -g \
 	 $(shell pkg-config $(PC_LIBS) --cflags-only-other)
 CXX = g++
@@ -53,6 +53,9 @@ tapir: $(OBJS)
 
 %.o: %.cpp
 	$(CXX) -MMD $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: %.c
+	$(CC) -MMD $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 main_rb.cpp: main_gen.rb main.rb
 	ruby main_gen.rb main.rb > $@
