@@ -251,6 +251,7 @@ VALUE rb_graphics_snap_to_bitmap(VALUE) {
 VALUE rb_graphics_frame_reset(VALUE) {
   Graphics::periodic_count = 0;
   Graphics::periodic_last = SDL_GetPerformanceCounter();
+  return Qnil;
 }
 VALUE rb_graphics_width(VALUE) {
   return INT2NUM(Graphics::width);
@@ -265,9 +266,11 @@ VALUE rb_graphics_resize_screen(VALUE, VALUE width, VALUE height) {
   SDL_SetWindowSize(mainWindow, Graphics::width, Graphics::height);
   // SDL_RenderSetLogicalSize(
   //     mainWindowRenderer, Graphics::width, Graphics::height);
+  return Qnil;
 }
 VALUE rb_graphics_play_movie(VALUE, VALUE filename) {
   fprintf(stderr, "TODO: Graphics::play_movie\n");
+  return Qnil;
 }
 VALUE rb_graphics_frame_rate(VALUE) {
   return INT2NUM(Graphics::frame_rate);
