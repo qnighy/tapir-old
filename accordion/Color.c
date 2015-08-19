@@ -23,12 +23,13 @@ VALUE rb_color_new2(void) {
 }
 
 void rb_color_set(
-    VALUE self, double red, double green, double blue, double alpha) {
+    VALUE self, double newred, double newgreen, double newblue,
+    double newalpha) {
   struct Color *ptr = convertColor(self);
-  ptr->red = saturateDouble(red, 0.0, 255.0);
-  ptr->green = saturateDouble(green, 0.0, 255.0);
-  ptr->blue = saturateDouble(blue, 0.0, 255.0);
-  ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
+  ptr->red = saturateDouble(newred, 0.0, 255.0);
+  ptr->green = saturateDouble(newgreen, 0.0, 255.0);
+  ptr->blue = saturateDouble(newblue, 0.0, 255.0);
+  ptr->alpha = saturateDouble(newalpha, 0.0, 255.0);
 }
 
 void rb_color_set2(VALUE self, VALUE other) {
@@ -44,33 +45,33 @@ double rb_color_red(VALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->red;
 }
-void rb_color_set_red(VALUE self, double red) {
+void rb_color_set_red(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->red = red;
+  ptr->red = saturateDouble(newval, 0.0, 255.0);
 }
 double rb_color_green(VALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->green;
 }
-void rb_color_set_green(VALUE self, double green) {
+void rb_color_set_green(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->green = green;
+  ptr->green = saturateDouble(newval, 0.0, 255.0);
 }
 double rb_color_blue(VALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->blue;
 }
-void rb_color_set_blue(VALUE self, double blue) {
+void rb_color_set_blue(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->blue = blue;
+  ptr->blue = saturateDouble(newval, 0.0, 255.0);
 }
 double rb_color_alpha(VALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->alpha;
 }
-void rb_color_set_alpha(VALUE self, double alpha) {
+void rb_color_set_alpha(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->alpha = alpha;
+  ptr->alpha = saturateDouble(newval, 0.0, 255.0);
 }
 
 static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self);
@@ -91,38 +92,30 @@ static VALUE rb_color_m_old_load(VALUE self, VALUE s);
 static VALUE rb_color_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cColor;
+
+/*
+ * Colors contain red, green, blue and alpha fields.
+ *
+ * Each field is a float between 0.0 and 255.0.
+ */
 void Init_Color(void) {
   rb_cColor = rb_define_class("Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, color_alloc);
-  rb_define_method(rb_cColor, "initialize",
-      (VALUE(*)(ANYARGS))rb_color_m_initialize, -1);
-  rb_define_method(rb_cColor, "initialize_copy",
-      (VALUE(*)(ANYARGS))rb_color_m_initialize_copy, 1);
-  rb_define_method(rb_cColor, "set",
-      (VALUE(*)(ANYARGS))rb_color_m_set, -1);
-  rb_define_method(rb_cColor, "red",
-      (VALUE(*)(ANYARGS))rb_color_m_red, 0);
-  rb_define_method(rb_cColor, "red=",
-      (VALUE(*)(ANYARGS))rb_color_m_set_red, 1);
-  rb_define_method(rb_cColor, "green",
-      (VALUE(*)(ANYARGS))rb_color_m_green, 0);
-  rb_define_method(rb_cColor, "green=",
-      (VALUE(*)(ANYARGS))rb_color_m_set_green, 1);
-  rb_define_method(rb_cColor, "blue",
-      (VALUE(*)(ANYARGS))rb_color_m_blue, 0);
-  rb_define_method(rb_cColor, "blue=",
-      (VALUE(*)(ANYARGS))rb_color_m_set_blue, 1);
-  rb_define_method(rb_cColor, "alpha",
-      (VALUE(*)(ANYARGS))rb_color_m_alpha, 0);
-  rb_define_method(rb_cColor, "alpha=",
-      (VALUE(*)(ANYARGS))rb_color_m_set_alpha, 1);
-
-  rb_define_method(rb_cColor, "to_s",
-      (VALUE(*)(ANYARGS))rb_color_m_to_s, 0);
-  rb_define_singleton_method(rb_cColor, "_load",
-      (VALUE(*)(ANYARGS))rb_color_m_old_load, 1);
-  rb_define_method(rb_cColor, "_dump",
-      (VALUE(*)(ANYARGS))rb_color_m_old_dump, 1);
+  rb_define_method(rb_cColor, "initialize", rb_color_m_initialize, -1);
+  rb_define_private_method(rb_cColor, "initialize_copy",
+      rb_color_m_initialize_copy, 1);
+  rb_define_method(rb_cColor, "set", rb_color_m_set, -1);
+  rb_define_method(rb_cColor, "red", rb_color_m_red, 0);
+  rb_define_method(rb_cColor, "red=", rb_color_m_set_red, 1);
+  rb_define_method(rb_cColor, "green", rb_color_m_green, 0);
+  rb_define_method(rb_cColor, "green=", rb_color_m_set_green, 1);
+  rb_define_method(rb_cColor, "blue", rb_color_m_blue, 0);
+  rb_define_method(rb_cColor, "blue=", rb_color_m_set_blue, 1);
+  rb_define_method(rb_cColor, "alpha", rb_color_m_alpha, 0);
+  rb_define_method(rb_cColor, "alpha=", rb_color_m_set_alpha, 1);
+  rb_define_method(rb_cColor, "to_s", rb_color_m_to_s, 0);
+  rb_define_singleton_method(rb_cColor, "_load", rb_color_m_old_load, 1);
+  rb_define_method(rb_cColor, "_dump", rb_color_m_old_dump, 1);
 }
 
 struct Color *convertColor(VALUE obj) {
@@ -145,6 +138,13 @@ static VALUE color_alloc(VALUE klass) {
   return ret;
 }
 
+/*
+ * call-seq:
+ *   Color.new(red, green, blue, alpha=255.0)
+ *   Color.new
+ *
+ * Returns a new color. In the second form, it initializes all fields by 0.0.
+ */
 static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 0:
@@ -152,6 +152,7 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
       break;
     case 1:
     case 2:
+      // The original seems to use such a wrong message.
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
       break;
@@ -161,7 +162,7 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[0]),
           NUM2DBL(argv[1]),
           NUM2DBL(argv[2]),
-          0.0);
+          255.0);
       break;
     case 4:
       rb_color_set(
@@ -172,17 +173,30 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
+      // The original seems to use such a wrong message.
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
       break;
   }
   return Qnil;
 }
+
 static VALUE rb_color_m_initialize_copy(VALUE self, VALUE orig) {
   rb_color_set2(self, orig);
   return Qnil;
 }
 
+/*
+ * call-seq:
+ *    color.set(red, green, blue, alpha=255.0) -> color
+ *    color.set(other) -> color
+ *    color.set -> color
+ *
+ * Sets all fields. In the second form, it copies all fields from
+ * <code>other</code>. In the third form, it initializes all fields by 0.0.
+ *
+ * It returns the color itself.
+ */
 static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 0:
@@ -192,6 +206,7 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
       rb_color_set2(self, argv[0]);
       break;
     case 2:
+      // The original seems to use such a wrong message.
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
       break;
@@ -201,7 +216,7 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[0]),
           NUM2DBL(argv[1]),
           NUM2DBL(argv[2]),
-          0.0);
+          255.0);
       break;
     case 4:
       rb_color_set(
@@ -212,62 +227,137 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
+      // The original seems to use such a wrong message.
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
       break;
   }
-  return Qnil;
+  return self;
 }
 
+/*
+ * call-seq:
+ *   color.red -> float
+ *
+ * Returns the red value of the color.
+ */
 static VALUE rb_color_m_red(VALUE self) {
   return DBL2NUM(rb_color_red(self));
 }
-static VALUE rb_color_m_set_red(VALUE self, VALUE red) {
-  rb_color_set_red(self, NUM2DBL(red));
-  return red;
+
+/*
+ * call-seq:
+ *   color.red = newval -> newval
+ *
+ * Sets the red value of the color.
+ */
+static VALUE rb_color_m_set_red(VALUE self, VALUE newval) {
+  rb_color_set_red(self, NUM2DBL(newval));
+  return newval;
 }
+
+/*
+ * call-seq:
+ *   color.green -> float
+ *
+ * Returns the green value of the color.
+ */
 static VALUE rb_color_m_green(VALUE self) {
   return DBL2NUM(rb_color_green(self));
 }
-static VALUE rb_color_m_set_green(VALUE self, VALUE green) {
-  rb_color_set_green(self, NUM2DBL(green));
-  return green;
+
+/*
+ * call-seq:
+ *   color.green = newval -> newval
+ *
+ * Sets the green value of the color.
+ */
+static VALUE rb_color_m_set_green(VALUE self, VALUE newval) {
+  rb_color_set_green(self, NUM2DBL(newval));
+  return newval;
 }
+
+/*
+ * call-seq:
+ *   color.blue -> float
+ *
+ * Returns the blue value of the color.
+ */
 static VALUE rb_color_m_blue(VALUE self) {
   return DBL2NUM(rb_color_blue(self));
 }
-static VALUE rb_color_m_set_blue(VALUE self, VALUE blue) {
-  rb_color_set_blue(self, NUM2DBL(blue));
-  return blue;
+
+/*
+ * call-seq:
+ *   color.blue = newval -> newval
+ *
+ * Sets the blue value of the color.
+ */
+static VALUE rb_color_m_set_blue(VALUE self, VALUE newval) {
+  rb_color_set_blue(self, NUM2DBL(newval));
+  return newval;
 }
+
+/*
+ * call-seq:
+ *   color.alpha -> float
+ *
+ * Returns the alpha value of the color.
+ */
 static VALUE rb_color_m_alpha(VALUE self) {
   return DBL2NUM(rb_color_alpha(self));
 }
-static VALUE rb_color_m_set_alpha(VALUE self, VALUE alpha) {
-  rb_color_set_alpha(self, NUM2DBL(alpha));
-  return alpha;
+
+/*
+ * call-seq:
+ *   color.alpha = newval -> newval
+ *
+ * Sets the alpha value of the color.
+ */
+static VALUE rb_color_m_set_alpha(VALUE self, VALUE newval) {
+  rb_color_set_alpha(self, NUM2DBL(newval));
+  return newval;
 }
+
+/*
+ * call-seq:
+ *   color.to_s -> string
+ *
+ * Returns the string representation of the color.
+ */
 static VALUE rb_color_m_to_s(VALUE self) {
   struct Color *ptr = convertColor(self);
   char s[50];
-  snprintf(s, sizeof(s), "(%f, %f, %f, %f)",
-      ptr->red,
-      ptr->green,
-      ptr->blue,
-      ptr->alpha);
+  // The original seems to use such an unsecure function.
+  sprintf(s, "(%f, %f, %f, %f)",
+      ptr->red, ptr->green, ptr->blue, ptr->alpha);
   return rb_str_new2(s);
 }
+
+/*
+ * call-seq:
+ *   Color._load(str) -> color
+ *
+ * Loads a color from <code>str</code>. Used in <code>Marshal.load</code>.
+ */
 static VALUE rb_color_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
-  ptr->red = saturateDouble(readDouble(s), 0.0, 255.0);
-  ptr->green = saturateDouble(readDouble(s+8), 0.0, 255.0);
-  ptr->blue = saturateDouble(readDouble(s+16), 0.0, 255.0);
-  ptr->alpha = saturateDouble(readDouble(s+24), 0.0, 255.0);
+  ptr->red = readDouble(s);
+  ptr->green = readDouble(s+8);
+  ptr->blue = readDouble(s+16);
+  ptr->alpha = readDouble(s+24);
   return ret;
 }
+
+/*
+ * call-seq:
+ *   color._dump(limit) -> string
+ *
+ * Dumps a color to a string. Used in <code>Marshal.dump</code>.
+ */
 static VALUE rb_color_m_old_dump(VALUE self, VALUE limit) {
   struct Color *ptr = convertColor(self);
   char s[32];

@@ -29,7 +29,7 @@ OBJS = main.o main_rb.o misc.o file_misc.o sdl_misc.o renderable.o rpg_rb.o \
        Table.o Tilemap.o Tone.o Viewport.o \
        Window.o Graphics.o Input.o RGSSReset.o
 
-.PHONY: all clean run run-valgrind
+.PHONY: all clean run run-valgrind run-gdb rdoc doxygen
 
 all: $(EXEC)
 
@@ -47,6 +47,12 @@ run-valgrind: all
 run-gdb: all
 	cp $(EXEC) $(TEST_GAME_DIR)
 	cd $(TEST_GAME_DIR); gdb -ex='dir ../../accordion' -ex='dir ../../ruby192' ./$(EXEC)
+
+rdoc:
+	rdoc $(OBJS:.o=.c)
+
+doxygen:
+	doxygen
 
 tapir: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
