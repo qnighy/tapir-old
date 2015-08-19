@@ -35,6 +35,7 @@ void rb_color_set(
 void rb_color_set2(VALUE self, VALUE other) {
   struct Color *ptr = convertColor(self);
   struct Color *other_ptr = convertColor(other);
+  // RGSS BUG: It doesn't saturate given values.
   ptr->red = other_ptr->red;
   ptr->green = other_ptr->green;
   ptr->blue = other_ptr->blue;
@@ -152,7 +153,7 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
       break;
     case 1:
     case 2:
-      // The original seems to use such a wrong message.
+      // RGSS BUG: It produces wrong messages.
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
       break;
@@ -173,7 +174,7 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
-      // The original seems to use such a wrong message.
+      // RGSS BUG: It produces wrong messages.
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
       break;
@@ -206,7 +207,7 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
       rb_color_set2(self, argv[0]);
       break;
     case 2:
-      // The original seems to use such a wrong message.
+      // RGSS BUG: It produces wrong messages.
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
       break;
@@ -227,7 +228,7 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
-      // The original seems to use such a wrong message.
+      // RGSS BUG: It produces wrong messages.
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
       break;
@@ -328,7 +329,7 @@ static VALUE rb_color_m_set_alpha(VALUE self, VALUE newval) {
 static VALUE rb_color_m_to_s(VALUE self) {
   struct Color *ptr = convertColor(self);
   char s[50];
-  // The original seems to use such an unsecure function.
+  // RGSS BUG: It doesn't use snprintf.
   sprintf(s, "(%f, %f, %f, %f)",
       ptr->red, ptr->green, ptr->blue, ptr->alpha);
   return rb_str_new2(s);
@@ -345,6 +346,7 @@ static VALUE rb_color_m_old_load(VALUE klass, VALUE str) {
   struct Color *ptr = convertColor(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
+  // RGSS BUG: It doesn't saturate read values.
   ptr->red = readDouble(s);
   ptr->green = readDouble(s+8);
   ptr->blue = readDouble(s+16);
