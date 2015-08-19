@@ -122,9 +122,9 @@ static void stretch_blt(
   int x1 = std::max<int>({dx, 0, dx-(int)(sx/scalex)});
   int y1 = std::max<int>({dy, 0, dy-(int)(sy/scaley)});
   int x2 = std::min<int>({
-      dx+dwidth, dst_surface->w, dx+(int)(src_surface->w-sx)/scalex});
+      dx+dwidth, dst_surface->w, dx+(int)((src_surface->w-sx)/scalex)});
   int y2 = std::min<int>({
-      dy+dheight, dst_surface->h, dy+(int)(src_surface->h-sy)/scaley});
+      dy+dheight, dst_surface->h, dy+(int)((src_surface->h-sy)/scaley)});
   SDL_LockSurface(dst_surface);
   SDL_LockSurface(src_surface);
   for(int xx = x1; xx < x2; ++xx) {
