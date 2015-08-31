@@ -7,6 +7,8 @@
 #ifndef TONE_H_INCLUDED
 #define TONE_H_INCLUDED
 
+#include <stdbool.h>
+
 #include <ruby.h>
 
 #ifdef __cplusplus
@@ -38,6 +40,12 @@ VALUE rb_tone_new(double red, double green, double blue, double gray);
  * @return The generated tone, with all fields initialized by 0.0.
  */
 VALUE rb_tone_new2(void);
+
+/**
+ * @brief Compares a tone to another tone.
+ * @return true if they're equal, false if not.
+ */
+bool rb_tone_equal(VALUE self, VALUE other);
 
 /**
  * @brief Sets all fields.

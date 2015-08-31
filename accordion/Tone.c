@@ -5,6 +5,7 @@ struct Tone {
   double red, green, blue, gray;
 };
 
+static bool isTone(VALUE obj);
 static struct Tone *convertTone(VALUE obj);
 static void tone_mark(struct Tone *);
 static VALUE tone_alloc(VALUE klass);
@@ -20,6 +21,16 @@ VALUE rb_tone_new(double red, double green, double blue, double gray) {
 }
 VALUE rb_tone_new2(void) {
   return rb_tone_new(0.0, 0.0, 0.0, 0.0);
+}
+
+bool rb_tone_equal(VALUE self, VALUE other) {
+  struct Tone *ptr = convertTone(self);
+  struct Tone *other_ptr = convertTone(other);
+  return
+    ptr->red == other_ptr->red &&
+    ptr->green == other_ptr->green &&
+    ptr->blue == other_ptr->blue &&
+    ptr->gray == other_ptr->gray;
 }
 
 void rb_tone_set(
@@ -78,6 +89,8 @@ void rb_tone_set_gray(VALUE self, double newval) {
 static VALUE rb_tone_m_initialize(int argc, VALUE *argv, VALUE self);
 static VALUE rb_tone_m_initialize_copy(VALUE self, VALUE orig);
 
+static VALUE rb_tone_m_equal(VALUE self, VALUE other);
+
 static VALUE rb_tone_m_set(int argc, VALUE *argv, VALUE self);
 
 static VALUE rb_tone_m_red(VALUE self);
@@ -105,6 +118,7 @@ void Init_Tone(void) {
   rb_define_method(rb_cTone, "initialize", rb_tone_m_initialize, -1);
   rb_define_private_method(rb_cTone, "initialize_copy",
       rb_tone_m_initialize_copy, 1);
+  rb_define_method(rb_cTone, "==", rb_tone_m_equal, 1);
   rb_define_method(rb_cTone, "set", rb_tone_m_set, -1);
   rb_define_method(rb_cTone, "red", rb_tone_m_red, 0);
   rb_define_method(rb_cTone, "red=", rb_tone_m_set_red, 1);
@@ -117,6 +131,11 @@ void Init_Tone(void) {
   rb_define_method(rb_cTone, "to_s", rb_tone_m_to_s, 0);
   rb_define_singleton_method(rb_cTone, "_load", rb_tone_m_old_load, 1);
   rb_define_method(rb_cTone, "_dump", rb_tone_m_old_dump, 1);
+}
+
+bool isTone(VALUE obj) {
+  if(TYPE(obj) != T_DATA) return false;
+  return RDATA(obj)->dmark == (void(*)(void*))tone_mark;
 }
 
 struct Tone *convertTone(VALUE obj) {
@@ -185,6 +204,17 @@ static VALUE rb_tone_m_initialize(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_tone_m_initialize_copy(VALUE self, VALUE orig) {
   rb_tone_set2(self, orig);
   return Qnil;
+}
+
+/*
+ * call-seq:
+ *    color == other -> bool
+ *
+ * Compares it to another tone.
+ */
+static VALUE rb_tone_m_equal(VALUE self, VALUE other) {
+  if(!isTone(other)) return Qfalse;
+  return rb_tone_equal(self, other) ? Qtrue : Qfalse;
 }
 
 /*
