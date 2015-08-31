@@ -64,8 +64,8 @@ int Bitmap::width() {
 int Bitmap::height() {
   return this->surface->h;
 }
-Rect *Bitmap::rect() {
-  return Rect::create(0, 0, this->surface->w, this->surface->h);
+VALUE Bitmap::rect() {
+  return rb_rect_new(0, 0, this->surface->w, this->surface->h);
 }
 static void blt(
     SDL_Surface *dst_surface, int dx, int dy,
@@ -162,22 +162,25 @@ static void stretch_blt(
   SDL_UnlockSurface(src_surface);
   SDL_UnlockSurface(dst_surface);
 }
-void Bitmap::blt(int x, int y, Bitmap *src_bitmap, Rect *src_rect,
+void Bitmap::blt(int x, int y, Bitmap *src_bitmap, VALUE src_rect,
     int opacity) {
   ::blt(surface, x, y, src_bitmap->surface,
-      src_rect->x, src_rect->y, src_rect->width, src_rect->height,
+      rb_rect_x(src_rect), rb_rect_y(src_rect),
+      rb_rect_width(src_rect), rb_rect_height(src_rect),
       opacity);
   if(this->texture) {
     SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::stretch_blt(Rect *dest_rect, Bitmap *src_bitmap, Rect *src_rect,
+void Bitmap::stretch_blt(VALUE dest_rect, Bitmap *src_bitmap, VALUE src_rect,
     int opacity) {
   ::stretch_blt(
       surface,
-      dest_rect->x, dest_rect->y, dest_rect->width, dest_rect->height,
+      rb_rect_x(dest_rect), rb_rect_y(dest_rect),
+      rb_rect_width(dest_rect), rb_rect_height(dest_rect),
       src_bitmap->surface,
-      src_rect->x, src_rect->y, src_rect->width, src_rect->height,
+      rb_rect_x(src_rect), rb_rect_y(src_rect),
+      rb_rect_width(src_rect), rb_rect_height(src_rect),
       opacity);
   if(this->texture) {
     SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
@@ -214,8 +217,10 @@ void Bitmap::fill_rect(int x, int y, int width, int height, VALUE color) {
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::fill_rect(Rect *rect, VALUE color) {
-  fill_rect(rect->x, rect->y, rect->width, rect->height, color);
+void Bitmap::fill_rect(VALUE rect, VALUE color) {
+  fill_rect(
+      rb_rect_x(rect), rb_rect_y(rect),
+      rb_rect_width(rect), rb_rect_height(rect), color);
 }
 void Bitmap::gradient_fill_rect(
     int x, int y, int width, int height, VALUE color1, VALUE color2,
@@ -261,10 +266,11 @@ void Bitmap::gradient_fill_rect(
   }
 }
 void Bitmap::gradient_fill_rect(
-    Rect *rect, VALUE color1, VALUE color2,
+    VALUE rect, VALUE color1, VALUE color2,
     bool vertical) {
   gradient_fill_rect(
-      rect->x, rect->y, rect->width, rect->height,
+      rb_rect_x(rect), rb_rect_y(rect),
+      rb_rect_width(rect), rb_rect_height(rect),
       color1, color2, vertical);
 }
 void Bitmap::clear() {
@@ -293,8 +299,10 @@ void Bitmap::clear_rect(int x, int y, int width, int height) {
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::clear_rect(Rect *rect) {
-  clear_rect(rect->x, rect->y, rect->width, rect->height);
+void Bitmap::clear_rect(VALUE rect) {
+  clear_rect(
+      rb_rect_x(rect), rb_rect_y(rect),
+      rb_rect_width(rect), rb_rect_height(rect));
 }
 VALUE Bitmap::get_pixel(int x, int y) {
   SDL_LockSurface(surface);
@@ -374,11 +382,13 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
         this->texture, NULL, this->surface->pixels, this->surface->pitch);
   }
 }
-void Bitmap::draw_text(Rect *rect, const char *str,
+void Bitmap::draw_text(VALUE rect, const char *str,
     int align) {
-  draw_text(rect->x, rect->y, rect->width, rect->height, str, align);
+  draw_text(
+      rb_rect_x(rect), rb_rect_y(rect),
+      rb_rect_width(rect), rb_rect_height(rect), str, align);
 }
-Rect *Bitmap::text_size(const char *str) {
+VALUE Bitmap::text_size(const char *str) {
   TTF_Font *font = this->font->createTTFFont();
   if(!font) {
     fprintf(stderr, "Font Not Found\n");
@@ -386,7 +396,7 @@ Rect *Bitmap::text_size(const char *str) {
   }
   int w, h;
   TTF_SizeUTF8(font, str, &w, &h);
-  return Rect::create(0, 0, w, h);
+  return rb_rect_new(0, 0, w, h);
 }
 
 SDL_Texture *Bitmap::createTexture(SDL_Renderer *renderer) {
@@ -578,7 +588,7 @@ static VALUE rb_bitmap_height(VALUE self) {
 }
 static VALUE rb_bitmap_rect(VALUE self) {
   Bitmap *ptr = convertBitmap(self);
-  return exportRect(ptr->rect());
+  return ptr->rect();
 }
 static VALUE rb_bitmap_blt(int argc, VALUE *argv, VALUE self) {
   Bitmap *ptr = convertBitmap(self);
@@ -586,12 +596,12 @@ static VALUE rb_bitmap_blt(int argc, VALUE *argv, VALUE self) {
     case 5:
       ptr->blt(
           NUM2INT(argv[0]), NUM2INT(argv[1]), convertBitmap(argv[2]),
-          convertRect(argv[3]), NUM2INT(argv[4]));
+          argv[3], NUM2INT(argv[4]));
       break;
     case 4:
       ptr->blt(
           NUM2INT(argv[0]), NUM2INT(argv[1]), convertBitmap(argv[2]),
-          convertRect(argv[3]));
+          argv[3]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -605,13 +615,11 @@ static VALUE rb_bitmap_stretch_blt(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 4:
       ptr->stretch_blt(
-          convertRect(argv[0]), convertBitmap(argv[1]),
-          convertRect(argv[2]), NUM2INT(argv[3]));
+          argv[0], convertBitmap(argv[1]),
+          argv[2], NUM2INT(argv[3]));
       break;
     case 3:
-      ptr->stretch_blt(
-          convertRect(argv[0]), convertBitmap(argv[1]),
-          convertRect(argv[2]));
+      ptr->stretch_blt(argv[0], convertBitmap(argv[1]), argv[2]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -629,8 +637,7 @@ static VALUE rb_bitmap_fill_rect(int argc, VALUE *argv, VALUE self) {
           NUM2INT(argv[3]), argv[4]);
       break;
     case 2:
-      ptr->fill_rect(
-          convertRect(argv[0]), argv[1]);
+      ptr->fill_rect(argv[0], argv[1]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -654,11 +661,10 @@ static VALUE rb_bitmap_gradient_fill_rect(int argc, VALUE *argv, VALUE self) {
           NUM2INT(argv[3]), argv[4], argv[5]);
       break;
     case 4:
-      ptr->gradient_fill_rect(
-          convertRect(argv[0]), argv[1], argv[2], RTEST(argv[3]));
+      ptr->gradient_fill_rect(argv[0], argv[1], argv[2], RTEST(argv[3]));
       break;
     case 3:
-      ptr->gradient_fill_rect(convertRect(argv[0]), argv[1], argv[2]);
+      ptr->gradient_fill_rect(argv[0], argv[1], argv[2]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -681,7 +687,7 @@ static VALUE rb_bitmap_clear_rect(int argc, VALUE *argv, VALUE self) {
           NUM2INT(argv[3]));
       break;
     case 1:
-      ptr->clear_rect(convertRect(argv[0]));
+      ptr->clear_rect(argv[0]);
       break;
     default:
       rb_raise(rb_eArgError,
@@ -734,13 +740,11 @@ static VALUE rb_bitmap_draw_text(int argc, VALUE *argv, VALUE self) {
       break;
     case 3:
       str = rb_check_convert_type(argv[1], T_STRING, "String", "to_s");
-      ptr->draw_text(
-          convertRect(argv[0]), StringValueCStr(str), NUM2INT(argv[2]));
+      ptr->draw_text(argv[0], StringValueCStr(str), NUM2INT(argv[2]));
       break;
     case 2:
       str = rb_check_convert_type(argv[1], T_STRING, "String", "to_s");
-      ptr->draw_text(
-          convertRect(argv[0]), StringValueCStr(str));
+      ptr->draw_text(argv[0], StringValueCStr(str));
       break;
     default:
       rb_raise(rb_eArgError,
@@ -752,7 +756,7 @@ static VALUE rb_bitmap_draw_text(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_bitmap_text_size(VALUE self, VALUE str) {
   Bitmap *ptr = convertBitmap(self);
   VALUE str2 = rb_check_convert_type(str, T_STRING, "String", "to_s");
-  return exportRect(ptr->text_size(StringValueCStr(str2)));
+  return ptr->text_size(StringValueCStr(str2));
 }
 
 static VALUE rb_bitmap_font(VALUE self) {

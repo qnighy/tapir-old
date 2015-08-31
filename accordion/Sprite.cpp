@@ -8,7 +8,7 @@
 
 void Sprite::initialize(Viewport *viewport) {
   this->bitmap = nullptr;
-  this->src_rect = Rect::create();
+  this->src_rect = rb_rect_new2();
   this->viewport = viewport;
   this->visible = true;
   this->x = 0;
@@ -54,10 +54,10 @@ void Sprite::update() {
   // TODO: Sprite::update
 }
 int Sprite::width() {
-  return this->src_rect->width;
+  return rb_rect_width(this->src_rect);
 }
 int Sprite::height() {
-  return this->src_rect->height;
+  return rb_rect_height(this->src_rect);
 }
 
 void Sprite::render(
@@ -66,10 +66,10 @@ void Sprite::render(
   if(!this->visible || !this->bitmap || !this->bitmap->surface) return;
   // fprintf(stderr, "render!\n");
   SDL_Rect src_rect_orig;
-  src_rect_orig.x = this->src_rect->x;
-  src_rect_orig.y = this->src_rect->y;
-  src_rect_orig.w = this->src_rect->width;
-  src_rect_orig.h = this->src_rect->height;
+  src_rect_orig.x = rb_rect_x(this->src_rect);
+  src_rect_orig.y = rb_rect_y(this->src_rect);
+  src_rect_orig.w = rb_rect_width(this->src_rect);
+  src_rect_orig.h = rb_rect_height(this->src_rect);
   SDL_Rect img_rect;
   img_rect.x = 0;
   img_rect.y = 0;
@@ -109,8 +109,8 @@ void Sprite::render(
   //     src_rect.x, src_rect.y, src_rect.x+src_rect.w, src_rect.y+src_rect.h,
   //     dst_rect.x, dst_rect.y, dst_rect.x+dst_rect.w, dst_rect.y+dst_rect.h);
   SDL_Point center;
-  center.x = this->src_rect->x + ox;
-  center.y = this->src_rect->y + oy;
+  center.x = rb_rect_x(this->src_rect) + ox;
+  center.y = rb_rect_y(this->src_rect) + oy;
   SDL_RenderCopyEx(renderer, texture, &src_rect, &dst_rect,
       angle, &center, mirror ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
 }
@@ -326,7 +326,7 @@ Sprite *Sprite::create(Viewport *viewport) {
 
 static void sprite_mark(Sprite *ptr) {
   if(ptr->bitmap) rb_gc_mark(ptr->bitmap->rb_parent);
-  rb_gc_mark(ptr->src_rect->rb_parent);
+  rb_gc_mark(ptr->src_rect);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
   rb_gc_mark(ptr->color);
   rb_gc_mark(ptr->tone);
@@ -340,7 +340,7 @@ static void sprite_free(Sprite *ptr) {
 static VALUE sprite_alloc(VALUE klass) {
   Sprite *ptr = ALLOC(Sprite);
   ptr->bitmap = nullptr;
-  ptr->src_rect = nullptr;
+  ptr->src_rect = Qnil;
   ptr->viewport = nullptr;
   ptr->color = Qnil;
   ptr->tone = Qnil;
@@ -413,16 +413,16 @@ static VALUE rb_sprite_bitmap(VALUE self) {
 static VALUE rb_sprite_set_bitmap(VALUE self, VALUE bitmap) {
   Sprite *ptr = convertSprite(self);
   ptr->bitmap = convertBitmapOrNil(bitmap);
-  if(ptr->bitmap) ptr->src_rect->set(ptr->bitmap->rect());
+  if(ptr->bitmap) rb_rect_set2(ptr->src_rect, ptr->bitmap->rect());
   return bitmap;
 }
 static VALUE rb_sprite_src_rect(VALUE self) {
   Sprite *ptr = convertSprite(self);
-  return exportRect(ptr->src_rect);
+  return ptr->src_rect;
 }
 static VALUE rb_sprite_set_src_rect(VALUE self, VALUE src_rect) {
   Sprite *ptr = convertSprite(self);
-  ptr->src_rect->set(convertRect(src_rect));
+  rb_rect_set2(ptr->src_rect, src_rect);
   return src_rect;
 }
 static VALUE rb_sprite_viewport(VALUE self) {

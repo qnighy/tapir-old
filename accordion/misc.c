@@ -32,3 +32,17 @@ void writeDouble(char *ptr, double val) {
   ptr[6] = num.u64>>48;
   ptr[7] = num.u64>>56;
 }
+
+int readInt(const char *ptr) {
+  return
+    ((uint32_t)(unsigned char)ptr[0])|
+    ((uint32_t)(unsigned char)ptr[1]<<8)|
+    ((uint32_t)(unsigned char)ptr[2]<<16)|
+    ((uint32_t)(unsigned char)ptr[3]<<24);
+}
+void writeInt(char *ptr, int val) {
+  ptr[0] = val;
+  ptr[1] = val>>8;
+  ptr[2] = val>>16;
+  ptr[3] = val>>24;
+}

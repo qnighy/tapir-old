@@ -54,7 +54,7 @@ int main(int, char **) {
     InitBitmap();
     Init_Color();
     InitFont();
-    InitRect();
+    Init_Rect();
     InitSprite();
     InitTable();
     InitTilemap();

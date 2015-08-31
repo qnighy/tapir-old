@@ -16,7 +16,7 @@ struct Viewport {
   Renderable renderable_entry;
   VALUE rb_parent;
 
-  Rect *rect;
+  VALUE rect;
   bool visible;
   int z, ox, oy;
   VALUE color;
@@ -26,7 +26,7 @@ struct Viewport {
   std::vector<Renderable*> *renderables;
 
   void initialize(int x, int y, int width, int height);
-  void initialize(Rect *rect);
+  void initialize(VALUE rect);
   void initialize();
   void dispose();
   bool disposed();
@@ -34,7 +34,7 @@ struct Viewport {
   void update();
 
   static Viewport *create(int x, int y, int width, int height);
-  static Viewport *create(Rect *rect);
+  static Viewport *create(VALUE rect);
   static Viewport *create();
 
   void render(

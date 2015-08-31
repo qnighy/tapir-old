@@ -1,26 +1,32 @@
+/**
+ * @file Rect.h
+ * @brief It defines Rect class.
+ * @author Masaki Hara
+ */
+
 #ifndef RECT_H_INCLUDED
 #define RECT_H_INCLUDED
 
+#include <stdbool.h>
+
 #include <ruby.h>
 
-struct Rect {
-  VALUE rb_parent;
-  int x, y, width, height;
-  void initialize(int x, int y, int width, int height);
-  void initialize();
-  void set(int x, int y, int width, int height);
-  void set(Rect *rect);
-  void empty();
-
-  static Rect *create(int x, int y, int width, int height);
-  static Rect *create();
-};
-
 extern VALUE rb_cRect;
-extern void InitRect();
 
-Rect *convertRect(VALUE obj);
-Rect *convertRectOrNil(VALUE obj);
-VALUE exportRect(Rect *ptr);
+extern void Init_Rect();
+
+VALUE rb_rect_new(int x, int y, int width, int height);
+VALUE rb_rect_new2(void);
+bool rb_rect_equal(VALUE self, VALUE other);
+void rb_rect_set(VALUE self, int newx, int newy, int newwidth, int newheight);
+void rb_rect_set2(VALUE self, VALUE other);
+int rb_rect_x(VALUE self);
+void rb_rect_set_x(VALUE self, int newx);
+int rb_rect_y(VALUE self);
+void rb_rect_set_y(VALUE self, int newy);
+int rb_rect_width(VALUE self);
+void rb_rect_set_width(VALUE self, int newwidth);
+int rb_rect_height(VALUE self);
+void rb_rect_set_height(VALUE self, int newheight);
 
 #endif // RECT_H_INCLUDED

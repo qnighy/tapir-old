@@ -7,6 +7,8 @@ extern "C" {
 
 double readDouble(const char *ptr);
 void writeDouble(char *ptr, double val);
+int readInt(const char *ptr);
+void writeInt(char *ptr, int val);
 
 inline int saturateInt(int val, int minval, int maxval) {
   if(val <= minval) return minval;

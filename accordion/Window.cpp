@@ -9,7 +9,7 @@
 void Window::initialize(int x, int y, int width, int height) {
   this->windowskin = nullptr;
   this->contents = Bitmap::create(1,1);
-  this->cursor_rect = Rect::create();
+  this->cursor_rect = rb_rect_new2();
   this->viewport = nullptr;
   this->active = true;
   this->visible = true;
@@ -95,10 +95,10 @@ void Window::render(
 
   {
     SDL_Rect cursor_rect;
-    cursor_rect.x = x-rox+padding-ox+this->cursor_rect->x;
-    cursor_rect.y = y-roy+padding-oy+this->cursor_rect->y;
-    cursor_rect.w = this->cursor_rect->width;
-    cursor_rect.h = this->cursor_rect->height;
+    cursor_rect.x = x-rox+padding-ox+rb_rect_x(this->cursor_rect);
+    cursor_rect.y = y-roy+padding-oy+rb_rect_y(this->cursor_rect);
+    cursor_rect.w = rb_rect_width(this->cursor_rect);
+    cursor_rect.h = rb_rect_height(this->cursor_rect);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, active ? 100 : 50);
     SDL_RenderFillRect(renderer, &cursor_rect);
@@ -342,7 +342,7 @@ Window *Window::create() {
 static void window_mark(Window *ptr) {
   if(ptr->windowskin) rb_gc_mark(ptr->windowskin->rb_parent);
   if(ptr->contents) rb_gc_mark(ptr->contents->rb_parent);
-  rb_gc_mark(ptr->cursor_rect->rb_parent);
+  rb_gc_mark(ptr->cursor_rect);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
   rb_gc_mark(ptr->tone);
 }
@@ -356,7 +356,7 @@ static VALUE window_alloc(VALUE klass) {
   Window *ptr = ALLOC(Window);
   ptr->windowskin = nullptr;
   ptr->contents = nullptr;
-  ptr->cursor_rect = nullptr;
+  ptr->cursor_rect = Qnil;
   ptr->viewport = nullptr;
   ptr->tone = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, window_mark, window_free, ptr);
@@ -444,11 +444,11 @@ static VALUE rb_window_set_contents(VALUE self, VALUE contents) {
 }
 static VALUE rb_window_cursor_rect(VALUE self) {
   Window *ptr = convertWindow(self);
-  return exportRect(ptr->cursor_rect);
+  return ptr->cursor_rect;
 }
 static VALUE rb_window_set_cursor_rect(VALUE self, VALUE cursor_rect) {
   Window *ptr = convertWindow(self);
-  ptr->cursor_rect->set(convertRect(cursor_rect));
+  rb_rect_set2(ptr->cursor_rect, cursor_rect);
   return cursor_rect;
 }
 static VALUE rb_window_viewport(VALUE self) {

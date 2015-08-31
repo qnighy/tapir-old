@@ -7,7 +7,7 @@
 #include "misc.h"
 
 void Viewport::initialize(int x, int y, int width, int height) {
-  this->rect = Rect::create(x, y, width, height);
+  this->rect = rb_rect_new(x, y, width, height);
   this->visible = true;
   this->z = 0;
   this->ox = 0;
@@ -23,8 +23,10 @@ void Viewport::initialize(int x, int y, int width, int height) {
   this->renderables = new std::vector<Renderable*>();
   Graphics::register_renderable((Renderable*)this, nullptr);
 }
-void Viewport::initialize(Rect *rect) {
-  initialize(rect->x, rect->y, rect->width, rect->height);
+void Viewport::initialize(VALUE rect) {
+  initialize(
+      rb_rect_x(rect), rb_rect_y(rect),
+      rb_rect_width(rect), rb_rect_height(rect));
 }
 void Viewport::initialize() {
   // TODO
@@ -50,15 +52,16 @@ void Viewport::render(
     SDL_Renderer *renderer,
     int rox, int roy, int rwidth, int rheight) {
   SDL_Rect clip_rect;
-  clip_rect.x = rect->x;
-  clip_rect.y = rect->y;
-  clip_rect.w = rect->width;
-  clip_rect.h = rect->height;
+  clip_rect.x = rb_rect_x(rect);
+  clip_rect.y = rb_rect_y(rect);
+  clip_rect.w = rb_rect_width(rect);
+  clip_rect.h = rb_rect_height(rect);
   SDL_RenderSetClipRect(renderer, &clip_rect);
   SDL_RenderSetViewport(renderer, &clip_rect);
   Graphics::sort_renderables(renderables);
   for(Renderable *r : *renderables) {
-    Graphics::render_renderable(r, renderer, ox, oy, rect->width, rect->height);
+    Graphics::render_renderable(
+        r, renderer, ox, oy, rb_rect_width(rect), rb_rect_height(rect));
   }
   SDL_RenderSetClipRect(renderer, NULL);
   SDL_RenderSetViewport(renderer, NULL);
@@ -170,7 +173,7 @@ Viewport *Viewport::create(int x, int y, int width, int height) {
   ptr->initialize(x, y, width, height);
   return ptr;
 }
-Viewport *Viewport::create(Rect *rect) {
+Viewport *Viewport::create(VALUE rect) {
   VALUE ret = viewport_alloc(rb_cViewport);
   Viewport *ptr = convertViewport(ret);
   ptr->initialize(rect);
@@ -184,7 +187,7 @@ Viewport *Viewport::create() {
 }
 
 static void viewport_mark(Viewport *ptr) {
-  rb_gc_mark(ptr->rect->rb_parent);
+  rb_gc_mark(ptr->rect);
   rb_gc_mark(ptr->color);
   rb_gc_mark(ptr->tone);
 }
@@ -199,7 +202,7 @@ static void viewport_free(Viewport *ptr) {
 
 static VALUE viewport_alloc(VALUE klass) {
   Viewport *ptr = ALLOC(Viewport);
-  ptr->rect = nullptr;
+  ptr->rect = Qnil;
   ptr->color = Qnil;
   ptr->tone = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, viewport_mark, viewport_free, ptr);
@@ -216,7 +219,7 @@ static VALUE rb_viewport_initialize(int argc, VALUE *argv, VALUE self) {
           NUM2INT(argv[3]));
       break;
     case 1:
-      ptr->initialize(convertRect(argv[0]));
+      ptr->initialize(argv[0]);
       break;
     case 0:
       ptr->initialize();
@@ -263,11 +266,11 @@ static VALUE rb_viewport_update(VALUE self) {
 
 static VALUE rb_viewport_rect(VALUE self) {
   Viewport *ptr = convertViewport(self);
-  return exportRect(ptr->rect);
+  return ptr->rect;
 }
 static VALUE rb_viewport_set_rect(VALUE self, VALUE rect) {
   Viewport *ptr = convertViewport(self);
-  ptr->rect->set(convertRect(rect));
+  rb_rect_set2(ptr->rect, rect);
   return rect;
 }
 static VALUE rb_viewport_visible(VALUE self) {

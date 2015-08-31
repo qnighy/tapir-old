@@ -16,7 +16,7 @@ struct Window {
   VALUE rb_parent;
 
   Bitmap *windowskin, *contents;
-  Rect *cursor_rect;
+  VALUE cursor_rect;
   Viewport *viewport;
   bool active, visible, arrows_visible, pause;
   int x, y, width, height, z, ox, oy;

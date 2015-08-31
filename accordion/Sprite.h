@@ -16,7 +16,7 @@ struct Sprite {
   VALUE rb_parent;
 
   Bitmap *bitmap;
-  Rect *src_rect;
+  VALUE src_rect;
   Viewport *viewport;
   bool visible;
   int x, y, z, ox, oy;
