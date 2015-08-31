@@ -5,6 +5,7 @@ struct Color {
   double red, green, blue, alpha;
 };
 
+static bool isColor(VALUE obj);
 static struct Color *convertColor(VALUE obj);
 static void color_mark(struct Color *);
 static VALUE color_alloc(VALUE klass);
@@ -21,6 +22,16 @@ VALUE rb_color_new(double red, double green, double blue, double alpha) {
 }
 VALUE rb_color_new2(void) {
   return rb_color_new(0.0, 0.0, 0.0, 0.0);
+}
+
+bool rb_color_equal(VALUE self, VALUE other) {
+  struct Color *ptr = convertColor(self);
+  struct Color *other_ptr = convertColor(other);
+  return
+    ptr->red == other_ptr->red &&
+    ptr->green == other_ptr->green &&
+    ptr->blue == other_ptr->blue &&
+    ptr->alpha == other_ptr->alpha;
 }
 
 void rb_color_set(
@@ -83,6 +94,8 @@ void rb_color_set_alpha(VALUE self, double newval) {
 static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self);
 static VALUE rb_color_m_initialize_copy(VALUE self, VALUE orig);
 
+static VALUE rb_color_m_equal(VALUE self, VALUE other);
+
 static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self);
 
 static VALUE rb_color_m_red(VALUE self);
@@ -110,6 +123,7 @@ void Init_Color(void) {
   rb_define_method(rb_cColor, "initialize", rb_color_m_initialize, -1);
   rb_define_private_method(rb_cColor, "initialize_copy",
       rb_color_m_initialize_copy, 1);
+  rb_define_method(rb_cColor, "==", rb_color_m_equal, 1);
   rb_define_method(rb_cColor, "set", rb_color_m_set, -1);
   rb_define_method(rb_cColor, "red", rb_color_m_red, 0);
   rb_define_method(rb_cColor, "red=", rb_color_m_set_red, 1);
@@ -122,6 +136,11 @@ void Init_Color(void) {
   rb_define_method(rb_cColor, "to_s", rb_color_m_to_s, 0);
   rb_define_singleton_method(rb_cColor, "_load", rb_color_m_old_load, 1);
   rb_define_method(rb_cColor, "_dump", rb_color_m_old_dump, 1);
+}
+
+bool isColor(VALUE obj) {
+  if(TYPE(obj) != T_DATA) return false;
+  return RDATA(obj)->dmark == (void(*)(void*))color_mark;
 }
 
 struct Color *convertColor(VALUE obj) {
@@ -190,6 +209,17 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_color_m_initialize_copy(VALUE self, VALUE orig) {
   rb_color_set2(self, orig);
   return Qnil;
+}
+
+/*
+ * call-seq:
+ *    color == other -> bool
+ *
+ * Compares it to another color.
+ */
+static VALUE rb_color_m_equal(VALUE self, VALUE other) {
+  if(!isColor(other)) return Qfalse;
+  return rb_color_equal(self, other) ? Qtrue : Qfalse;
 }
 
 /*

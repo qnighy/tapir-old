@@ -7,6 +7,8 @@
 #ifndef COLOR_H_INCLUDED
 #define COLOR_H_INCLUDED
 
+#include <stdbool.h>
+
 #include <ruby.h>
 
 #ifdef __cplusplus
@@ -38,6 +40,12 @@ VALUE rb_color_new(double red, double green, double blue, double alpha);
  * @return The generated color, with all fields initialized by 0.0.
  */
 VALUE rb_color_new2(void);
+
+/**
+ * @brief Compares a color to another color.
+ * @return true if they're equal, false if not.
+ */
+bool rb_color_equal(VALUE self, VALUE other);
 
 /**
  * @brief Sets all fields.
