@@ -14,7 +14,7 @@ inline int saturateInt(int val, int minval, int maxval) {
   return val;
 }
 
-inline int saturateDouble(double val, double minval, double maxval) {
+inline double saturateDouble(double val, double minval, double maxval) {
   if(val <= minval) return minval;
   if(val >= maxval) return maxval;
   return val;
