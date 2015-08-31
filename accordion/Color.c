@@ -12,9 +12,10 @@ static VALUE color_alloc(VALUE klass);
 VALUE rb_color_new(double red, double green, double blue, double alpha) {
   VALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
-  ptr->red = saturateDouble(red, 0.0, 255.0);
-  ptr->green = saturateDouble(green, 0.0, 255.0);
-  ptr->blue = saturateDouble(blue, 0.0, 255.0);
+  // RGSS BUG: It doesn't saturate values correctly.
+  ptr->red = saturateDouble(red, -255.0, 255.0);
+  ptr->green = saturateDouble(green, -255.0, 255.0);
+  ptr->blue = saturateDouble(blue, -255.0, 255.0);
   ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
   return ret;
 }
@@ -26,9 +27,10 @@ void rb_color_set(
     VALUE self, double newred, double newgreen, double newblue,
     double newalpha) {
   struct Color *ptr = convertColor(self);
-  ptr->red = saturateDouble(newred, 0.0, 255.0);
-  ptr->green = saturateDouble(newgreen, 0.0, 255.0);
-  ptr->blue = saturateDouble(newblue, 0.0, 255.0);
+  // RGSS BUG: It doesn't saturate values correctly.
+  ptr->red = saturateDouble(newred, -255.0, 255.0);
+  ptr->green = saturateDouble(newgreen, -255.0, 255.0);
+  ptr->blue = saturateDouble(newblue, -255.0, 255.0);
   ptr->alpha = saturateDouble(newalpha, 0.0, 255.0);
 }
 
@@ -48,7 +50,8 @@ double rb_color_red(VALUE self) {
 }
 void rb_color_set_red(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->red = saturateDouble(newval, 0.0, 255.0);
+  // RGSS BUG: It doesn't saturate values correctly.
+  ptr->red = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_color_green(VALUE self) {
   struct Color *ptr = convertColor(self);
@@ -56,7 +59,8 @@ double rb_color_green(VALUE self) {
 }
 void rb_color_set_green(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->green = saturateDouble(newval, 0.0, 255.0);
+  // RGSS BUG: It doesn't saturate values correctly.
+  ptr->green = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_color_blue(VALUE self) {
   struct Color *ptr = convertColor(self);
@@ -64,7 +68,8 @@ double rb_color_blue(VALUE self) {
 }
 void rb_color_set_blue(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  ptr->blue = saturateDouble(newval, 0.0, 255.0);
+  // RGSS BUG: It doesn't saturate values correctly.
+  ptr->blue = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_color_alpha(VALUE self) {
   struct Color *ptr = convertColor(self);
