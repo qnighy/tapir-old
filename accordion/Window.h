@@ -22,7 +22,7 @@ struct Window {
   int x, y, width, height, z, ox, oy;
   int padding, padding_bottom, opacity, back_opacity;
   int contents_opacity, openness;
-  Tone *tone;
+  VALUE tone;
 
   bool is_disposed;
 

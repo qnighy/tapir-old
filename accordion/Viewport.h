@@ -20,7 +20,7 @@ struct Viewport {
   bool visible;
   int z, ox, oy;
   VALUE color;
-  Tone *tone;
+  VALUE tone;
 
   bool is_disposed;
   std::vector<Renderable*> *renderables;

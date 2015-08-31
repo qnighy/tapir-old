@@ -13,7 +13,7 @@ void Viewport::initialize(int x, int y, int width, int height) {
   this->ox = 0;
   this->oy = 0;
   this->color = rb_color_new2();
-  this->tone = Tone::create();
+  this->tone = rb_tone_new2();
 
   this->is_disposed = false;
   this->renderable_entry.type = RenderableType::VIEWPORT;
@@ -186,7 +186,7 @@ Viewport *Viewport::create() {
 static void viewport_mark(Viewport *ptr) {
   rb_gc_mark(ptr->rect->rb_parent);
   rb_gc_mark(ptr->color);
-  rb_gc_mark(ptr->tone->rb_parent);
+  rb_gc_mark(ptr->tone);
 }
 
 static void viewport_free(Viewport *ptr) {
@@ -201,7 +201,7 @@ static VALUE viewport_alloc(VALUE klass) {
   Viewport *ptr = ALLOC(Viewport);
   ptr->rect = nullptr;
   ptr->color = Qnil;
-  ptr->tone = nullptr;
+  ptr->tone = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, viewport_mark, viewport_free, ptr);
   ptr->rb_parent = ret;
   return ret;
@@ -318,10 +318,10 @@ static VALUE rb_viewport_set_color(VALUE self, VALUE color) {
 }
 static VALUE rb_viewport_tone(VALUE self) {
   Viewport *ptr = convertViewport(self);
-  return exportTone(ptr->tone);
+  return ptr->tone;
 }
 static VALUE rb_viewport_set_tone(VALUE self, VALUE tone) {
   Viewport *ptr = convertViewport(self);
-  ptr->tone->set(convertTone(tone));
+  rb_tone_set2(ptr->tone, tone);
   return tone;
 }

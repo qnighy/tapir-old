@@ -58,7 +58,7 @@ int main(int, char **) {
     InitSprite();
     InitTable();
     InitTilemap();
-    InitTone();
+    Init_Tone();
     InitViewport();
     InitWindow();
     InitGraphics();

@@ -28,7 +28,7 @@ void Window::initialize(int x, int y, int width, int height) {
   this->back_opacity = 192;
   this->contents_opacity = 255;
   this->openness = 255;
-  this->tone = Tone::create();
+  this->tone = rb_tone_new2();
 
   this->is_disposed = false;
   this->renderable_entry.type = RenderableType::WINDOW;
@@ -85,8 +85,8 @@ void Window::render(
     rect.w = width-4;
     rect.h = height-4;
     SDL_RenderFillRect(renderer, &rect);
-    if(tone->red != 0.0 || tone->green != 0.0 ||
-        tone->blue != 0.0 || tone->gray != 0.0) {
+    if(rb_tone_red(tone) != 0.0 || rb_tone_green(tone) != 0.0 ||
+        rb_tone_blue(tone) != 0.0 || rb_tone_gray(tone) != 0.0) {
       // fprintf(stderr, "TODO: Window::render: tone\n");
     }
   }
@@ -344,7 +344,7 @@ static void window_mark(Window *ptr) {
   if(ptr->contents) rb_gc_mark(ptr->contents->rb_parent);
   rb_gc_mark(ptr->cursor_rect->rb_parent);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
-  rb_gc_mark(ptr->tone->rb_parent);
+  rb_gc_mark(ptr->tone);
 }
 
 static void window_free(Window *ptr) {
@@ -358,7 +358,7 @@ static VALUE window_alloc(VALUE klass) {
   ptr->contents = nullptr;
   ptr->cursor_rect = nullptr;
   ptr->viewport = nullptr;
-  ptr->tone = nullptr;
+  ptr->tone = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, window_mark, window_free, ptr);
   ptr->rb_parent = ret;
   return ret;
@@ -619,10 +619,10 @@ static VALUE rb_window_set_openness(VALUE self, VALUE openness) {
 }
 static VALUE rb_window_tone(VALUE self) {
   Window *ptr = convertWindow(self);
-  return exportTone(ptr->tone);
+  return ptr->tone;
 }
 static VALUE rb_window_set_tone(VALUE self, VALUE tone) {
   Window *ptr = convertWindow(self);
-  ptr->tone->set(convertTone(tone));
+  rb_tone_set2(ptr->tone, tone);
   return tone;
 }

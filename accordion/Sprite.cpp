@@ -29,7 +29,7 @@ void Sprite::initialize(Viewport *viewport) {
   this->opacity = 255;
   this->blend_type = 0;
   this->color = rb_color_new2();
-  this->tone = Tone::create();
+  this->tone = rb_tone_new2();
 
   this->is_disposed = false;
   this->renderable_entry.type = RenderableType::SPRITE;
@@ -101,8 +101,8 @@ void Sprite::render(
   if(rb_color_alpha(color) != 0.0) {
     // fprintf(stderr, "TODO: Sprite::render: color\n");
   }
-  if(tone->red != 0.0 || tone->green != 0.0 ||
-      tone->blue != 0.0 || tone->gray != 0.0) {
+  if(rb_tone_red(tone) != 0.0 || rb_tone_green(tone) != 0.0 ||
+      rb_tone_blue(tone) != 0.0 || rb_tone_gray(tone) != 0.0) {
     // fprintf(stderr, "TODO: Sprite::render: tone\n");
   }
   // fprintf(stderr, "(%d,%d,%d,%d)->(%d,%d,%d,%d)\n",
@@ -329,7 +329,7 @@ static void sprite_mark(Sprite *ptr) {
   rb_gc_mark(ptr->src_rect->rb_parent);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
   rb_gc_mark(ptr->color);
-  rb_gc_mark(ptr->tone->rb_parent);
+  rb_gc_mark(ptr->tone);
 }
 
 static void sprite_free(Sprite *ptr) {
@@ -343,7 +343,7 @@ static VALUE sprite_alloc(VALUE klass) {
   ptr->src_rect = nullptr;
   ptr->viewport = nullptr;
   ptr->color = Qnil;
-  ptr->tone = nullptr;
+  ptr->tone = Qnil;
   VALUE ret = Data_Wrap_Struct(klass, sprite_mark, sprite_free, ptr);
   ptr->rb_parent = ret;
   return ret;
@@ -611,10 +611,10 @@ static VALUE rb_sprite_set_color(VALUE self, VALUE color) {
 }
 static VALUE rb_sprite_tone(VALUE self) {
   Sprite *ptr = convertSprite(self);
-  return exportTone(ptr->tone);
+  return ptr->tone;
 }
 static VALUE rb_sprite_set_tone(VALUE self, VALUE tone) {
   Sprite *ptr = convertSprite(self);
-  ptr->tone->set(convertTone(tone));
+  rb_tone_set2(ptr->tone, tone);
   return tone;
 }

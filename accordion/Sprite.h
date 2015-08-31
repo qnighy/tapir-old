@@ -26,7 +26,7 @@ struct Sprite {
   bool mirror;
   int bush_depth, bush_opacity, opacity, blend_type;
   VALUE color;
-  Tone *tone;
+  VALUE tone;
 
   bool is_disposed;
 
