@@ -11,9 +11,13 @@
 
 #include <ruby.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern VALUE rb_cRect;
 
-extern void Init_Rect();
+extern void Init_Rect(void);
 
 VALUE rb_rect_new(int x, int y, int width, int height);
 VALUE rb_rect_new2(void);
@@ -28,5 +32,9 @@ int rb_rect_width(VALUE self);
 void rb_rect_set_width(VALUE self, int newwidth);
 int rb_rect_height(VALUE self);
 void rb_rect_set_height(VALUE self, int newheight);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RECT_H_INCLUDED

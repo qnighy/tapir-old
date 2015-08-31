@@ -6,8 +6,8 @@ struct Rect {
 };
 
 bool isRect(VALUE obj);
-Rect *convertRect(VALUE obj);
-static void rect_mark(Rect *);
+struct Rect *convertRect(VALUE obj);
+static void rect_mark(struct Rect *);
 static VALUE rect_alloc(VALUE klass);
 
 VALUE rb_rect_new(int x, int y, int width, int height) {
@@ -109,36 +109,23 @@ VALUE rb_cRect;
 void Init_Rect() {
   rb_cRect = rb_define_class("Rect", rb_cObject);
   rb_define_alloc_func(rb_cRect, rect_alloc);
-  rb_define_method(rb_cRect, "initialize",
-      (VALUE(*)(...))rb_rect_m_initialize, -1);
+  rb_define_method(rb_cRect, "initialize", rb_rect_m_initialize, -1);
   rb_define_private_method(rb_cRect, "initialize_copy",
-      (VALUE(*)(...))rb_rect_m_initialize_copy, 1);
-  rb_define_method(rb_cRect, "==",
-      (VALUE(*)(...))rb_rect_m_equal, 1);
-  rb_define_method(rb_cRect, "set",
-      (VALUE(*)(...))rb_rect_m_set, -1);
-  rb_define_method(rb_cRect, "empty",
-      (VALUE(*)(...))rb_rect_m_empty, 0);
-  rb_define_method(rb_cRect, "x",
-      (VALUE(*)(...))rb_rect_m_x, 0);
-  rb_define_method(rb_cRect, "x=",
-      (VALUE(*)(...))rb_rect_m_set_x, 1);
-  rb_define_method(rb_cRect, "y",
-      (VALUE(*)(...))rb_rect_m_y, 0);
-  rb_define_method(rb_cRect, "y=",
-      (VALUE(*)(...))rb_rect_m_set_y, 1);
-  rb_define_method(rb_cRect, "width",
-      (VALUE(*)(...))rb_rect_m_width, 0);
-  rb_define_method(rb_cRect, "width=",
-      (VALUE(*)(...))rb_rect_m_set_width, 1);
-  rb_define_method(rb_cRect, "height",
-      (VALUE(*)(...))rb_rect_m_height, 0);
-  rb_define_method(rb_cRect, "height=",
-      (VALUE(*)(...))rb_rect_m_set_height, 1);
-  rb_define_method(rb_cRect, "to_s",
-      (VALUE(*)(...))rb_rect_m_to_s, 0);
-  rb_define_singleton_method(rb_cRect, "_load", (VALUE(*)(...))rb_rect_m_old_load, 1);
-  rb_define_method(rb_cRect, "_dump", (VALUE(*)(...))rb_rect_m_old_dump, 1);
+      rb_rect_m_initialize_copy, 1);
+  rb_define_method(rb_cRect, "==", rb_rect_m_equal, 1);
+  rb_define_method(rb_cRect, "set", rb_rect_m_set, -1);
+  rb_define_method(rb_cRect, "empty", rb_rect_m_empty, 0);
+  rb_define_method(rb_cRect, "x", rb_rect_m_x, 0);
+  rb_define_method(rb_cRect, "x=", rb_rect_m_set_x, 1);
+  rb_define_method(rb_cRect, "y", rb_rect_m_y, 0);
+  rb_define_method(rb_cRect, "y=", rb_rect_m_set_y, 1);
+  rb_define_method(rb_cRect, "width", rb_rect_m_width, 0);
+  rb_define_method(rb_cRect, "width=", rb_rect_m_set_width, 1);
+  rb_define_method(rb_cRect, "height", rb_rect_m_height, 0);
+  rb_define_method(rb_cRect, "height=", rb_rect_m_set_height, 1);
+  rb_define_method(rb_cRect, "to_s", rb_rect_m_to_s, 0);
+  rb_define_singleton_method(rb_cRect, "_load", rb_rect_m_old_load, 1);
+  rb_define_method(rb_cRect, "_dump", rb_rect_m_old_dump, 1);
 }
 
 bool isRect(VALUE obj) {
@@ -146,22 +133,22 @@ bool isRect(VALUE obj) {
   return RDATA(obj)->dmark == (void(*)(void*))rect_mark;
 }
 
-Rect *convertRect(VALUE obj) {
+struct Rect *convertRect(VALUE obj) {
   Check_Type(obj, T_DATA);
   if(RDATA(obj)->dmark != (void(*)(void*))rect_mark) {
     rb_raise(rb_eTypeError,
         "can't convert %s into Rect",
         rb_class2name(rb_obj_class(obj)));
   }
-  Rect *ret;
-  Data_Get_Struct(obj, Rect, ret);
+  struct Rect *ret;
+  Data_Get_Struct(obj, struct Rect, ret);
   return ret;
 }
 
-static void rect_mark(Rect *) {}
+static void rect_mark(struct Rect *ptr) {}
 
 static VALUE rect_alloc(VALUE klass) {
-  Rect *ptr = ALLOC(Rect);
+  struct Rect *ptr = ALLOC(struct Rect);
   VALUE ret = Data_Wrap_Struct(klass, rect_mark, -1, ptr);
   return ret;
 }
