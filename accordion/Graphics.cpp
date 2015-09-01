@@ -236,7 +236,7 @@ VALUE rb_graphics_transition(int argc, VALUE *argv, VALUE self) {
   std::string filename = "";
   if(argc > 1 && argv[1] != Qnil) filename = StringValueCStr(argv[1]);
   int vague = 40;
-  if(argc > 2) vague = saturateInt(NUM2INT(argv[2]), 0, 255);
+  if(argc > 2) vague = saturateInt32(NUM2INT(argv[2]), 0, 255);
 
   fprintf(stderr, "TODO: Graphics::transition\n");
   for(int i = 0; i < duration; ++i) {
@@ -276,7 +276,7 @@ VALUE rb_graphics_frame_rate(VALUE) {
   return INT2NUM(Graphics::frame_rate);
 }
 VALUE rb_graphics_set_frame_rate(VALUE, VALUE frame_rate) {
-  Graphics::frame_rate = saturateInt(NUM2INT(frame_rate), 10, 120);
+  Graphics::frame_rate = saturateInt32(NUM2INT(frame_rate), 10, 120);
   Graphics::periodic_count = 0;
   Graphics::periodic_last = SDL_GetPerformanceCounter();
   return frame_rate;
@@ -292,6 +292,6 @@ VALUE rb_graphics_brightness(VALUE) {
   return INT2NUM(Graphics::brightness);
 }
 VALUE rb_graphics_set_brightness(VALUE, VALUE brightness) {
-  Graphics::brightness = saturateInt(NUM2INT(brightness), 0, 255);
+  Graphics::brightness = saturateInt32(NUM2INT(brightness), 0, 255);
   return brightness;
 }

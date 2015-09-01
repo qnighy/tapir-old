@@ -371,10 +371,10 @@ static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
   struct Rect *ptr = convertRect(ret);
   char *s = StringValuePtr(str);
   if(!s) return ret;
-  ptr->x = readInt(s);
-  ptr->y = readInt(s+4);
-  ptr->width = readInt(s+8);
-  ptr->height = readInt(s+12);
+  ptr->x = readInt32(s);
+  ptr->y = readInt32(s+4);
+  ptr->width = readInt32(s+8);
+  ptr->height = readInt32(s+12);
   return ret;
 }
 
@@ -387,10 +387,10 @@ static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
 static VALUE rb_rect_m_old_dump(VALUE self, VALUE limit) {
   struct Rect *ptr = convertRect(self);
   char s[16];
-  writeInt(s, ptr->x);
-  writeInt(s+4, ptr->y);
-  writeInt(s+8, ptr->width);
-  writeInt(s+12, ptr->height);
+  writeInt32(s, ptr->x);
+  writeInt32(s+4, ptr->y);
+  writeInt32(s+8, ptr->width);
+  writeInt32(s+12, ptr->height);
   VALUE ret = rb_str_new(s, 16);
   return ret;
 }

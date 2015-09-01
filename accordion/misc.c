@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #include "misc.h"
 
 union u64d_converter {
@@ -33,16 +31,25 @@ void writeDouble(char *ptr, double val) {
   ptr[7] = num.u64>>56;
 }
 
-int readInt(const char *ptr) {
-  return
+union u32i_converter {
+  uint32_t u32;
+  int32_t i32;
+};
+
+int32_t readInt32(const char *ptr) {
+  union u32i_converter num;
+  num.u32 =
     ((uint32_t)(unsigned char)ptr[0])|
     ((uint32_t)(unsigned char)ptr[1]<<8)|
     ((uint32_t)(unsigned char)ptr[2]<<16)|
     ((uint32_t)(unsigned char)ptr[3]<<24);
+  return num.i32;
 }
-void writeInt(char *ptr, int val) {
-  ptr[0] = val;
-  ptr[1] = val>>8;
-  ptr[2] = val>>16;
-  ptr[3] = val>>24;
+void writeInt32(char *ptr, int32_t val) {
+  union u32i_converter num;
+  num.i32 = val;
+  ptr[0] = num.u32;
+  ptr[1] = num.u32>>8;
+  ptr[2] = num.u32>>16;
+  ptr[3] = num.u32>>24;
 }
