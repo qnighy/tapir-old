@@ -49,21 +49,21 @@ int main(int, char **) {
     Init_zlib();
 
     InitFileMisc();
-    InitRPG();
 
-    InitBitmap();
+    InitRGSSReset();
     Init_Color();
-    InitFont();
-    Init_Rect();
-    InitSprite();
-    InitTable();
-    InitTilemap();
     Init_Tone();
+    Init_Rect();
+    InitTable();
+    InitFont();
+    InitBitmap();
+    InitGraphics();
+    InitSprite();
+    InitTilemap();
     InitViewport();
     InitWindow();
-    InitGraphics();
     InitInput();
-    InitRGSSReset();
+    InitRPG();
 
     rb_protect(protected_main, Qnil, NULL);
   }
