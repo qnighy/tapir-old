@@ -22,7 +22,6 @@ class Plane
   def color=(color); @color.set(color); end
   def tone=(tone); @tone.set(tone); end
 end
-class RGSSError < StandardError; end
 
 module Audio
   def self.setup_midi; end

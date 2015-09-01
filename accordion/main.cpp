@@ -2,23 +2,24 @@
 #include <SDL.h>
 #include <cstdio>
 
-#include "Bitmap.h"
-#include "Color.h"
-#include "Font.h"
-#include "Rect.h"
-#include "Sprite.h"
-#include "Table.h"
-#include "Tilemap.h"
-#include "Tone.h"
-#include "Viewport.h"
-#include "Window.h"
-#include "Graphics.h"
-#include "Input.h"
-#include "RGSSReset.h"
-#include "sdl_misc.h"
 #include "file_misc.h"
+#include "sdl_misc.h"
 #include "rpg_rb.h"
 #include "main_rb.h"
+#include "RGSSError.h"
+#include "RGSSReset.h"
+#include "Color.h"
+#include "Tone.h"
+#include "Rect.h"
+#include "Table.h"
+#include "Font.h"
+#include "Bitmap.h"
+#include "Graphics.h"
+#include "Sprite.h"
+#include "Tilemap.h"
+#include "Viewport.h"
+#include "Window.h"
+#include "Input.h"
 
 extern "C" void Init_zlib(void);
 
@@ -50,7 +51,8 @@ int main(int, char **) {
 
     InitFileMisc();
 
-    InitRGSSReset();
+    Init_RGSSError();
+    Init_RGSSReset();
     Init_Color();
     Init_Tone();
     Init_Rect();
