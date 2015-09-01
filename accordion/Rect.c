@@ -106,6 +106,11 @@ static VALUE rb_rect_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cRect;
 
+/*
+ * Rectangles contain x, y, width and height fields.
+ *
+ * Each field is a signed 32-bit integer.
+ */
 void Init_Rect() {
   rb_cRect = rb_define_class("Rect", rb_cObject);
   rb_define_alloc_func(rb_cRect, rect_alloc);
@@ -153,6 +158,13 @@ static VALUE rect_alloc(VALUE klass) {
   return ret;
 }
 
+/*
+ * call-seq:
+ *   Rect.new(x, y, width, height)
+ *   Rect.new
+ *
+ * Returns a new rectangle. In the second form, it initializes all fields by 0.
+ */
 static VALUE rb_rect_m_initialize(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 0:
@@ -178,22 +190,39 @@ static VALUE rb_rect_m_initialize(int argc, VALUE *argv, VALUE self) {
   }
   return Qnil;
 }
+
 static VALUE rb_rect_m_initialize_copy(VALUE self, VALUE orig) {
   rb_rect_set2(self, orig);
   return Qnil;
 }
 
+/*
+ * call-seq:
+ *    rectangle == other -> bool
+ *
+ * Compares it to another rectangle.
+ */
 static VALUE rb_rect_m_equal(VALUE self, VALUE other) {
   if(!isRect(other)) return Qfalse;
   return rb_rect_equal(self, other) ? Qtrue : Qfalse;
 }
 
+/*
+ * call-seq:
+ *    rectangle.set(x, y, width, height) -> rectangle
+ *    rectangle.set(other) -> rectangle
+ *
+ * Sets all fields. In the second form, it copies all fields from
+ * <code>other</code>.
+ *
+ * It returns the rectangle itself.
+ */
 static VALUE rb_rect_m_set(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 0:
       // RGSS BUG: It produces wrong messages.
       rb_raise(rb_eArgError,
-          "wrong number of arguments (1 for %d)", argc);
+          "wrong number of arguments (4 for %d)", argc);
       break;
     case 1:
       rb_rect_set2(self, argv[0]);
@@ -217,40 +246,110 @@ static VALUE rb_rect_m_set(int argc, VALUE *argv, VALUE self) {
   }
   return self;
 }
+
+/*
+ * call-seq:
+ *    rectangle.empty -> rectangle
+ *
+ * Initializes all fields by 0.
+ *
+ * It returns the rectangle itself.
+ */
 static VALUE rb_rect_m_empty(VALUE self) {
   rb_rect_set(self, 0, 0, 0, 0);
   return self;
 }
 
+/*
+ * call-seq:
+ *    rectangle.x -> integer
+ *
+ * Returns the x value of the rectangle.
+ */
 static VALUE rb_rect_m_x(VALUE self) {
   return INT2NUM(rb_rect_x(self));
 }
+
+/*
+ * call-seq:
+ *    rectangle.x = newval -> newval
+ *
+ * Sets the x value of the rectangle.
+ */
 static VALUE rb_rect_m_set_x(VALUE self, VALUE newval) {
   rb_rect_set_x(self, NUM2INT(newval));
   return newval;
 }
+
+/*
+ * call-seq:
+ *    rectangle.y -> integer
+ *
+ * Returns the y value of the rectangle.
+ */
 static VALUE rb_rect_m_y(VALUE self) {
   return INT2NUM(rb_rect_y(self));
 }
+
+/*
+ * call-seq:
+ *    rectangle.y = newval -> newval
+ *
+ * Sets the y value of the rectangle.
+ */
 static VALUE rb_rect_m_set_y(VALUE self, VALUE newval) {
   rb_rect_set_y(self, NUM2INT(newval));
   return newval;
 }
+
+/*
+ * call-seq:
+ *    rectangle.width -> integer
+ *
+ * Returns the width value of the rectangle.
+ */
 static VALUE rb_rect_m_width(VALUE self) {
   return INT2NUM(rb_rect_width(self));
 }
+
+/*
+ * call-seq:
+ *    rectangle.width = newval -> newval
+ *
+ * Sets the width value of the rectangle.
+ */
 static VALUE rb_rect_m_set_width(VALUE self, VALUE newval) {
   rb_rect_set_width(self, NUM2INT(newval));
   return newval;
 }
+
+/*
+ * call-seq:
+ *    rectangle.height -> integer
+ *
+ * Returns the height value of the rectangle.
+ */
 static VALUE rb_rect_m_height(VALUE self) {
   return INT2NUM(rb_rect_height(self));
 }
+
+/*
+ * call-seq:
+ *    rectangle.height = newval -> newval
+ *
+ * Sets the height value of the rectangle.
+ */
 static VALUE rb_rect_m_set_height(VALUE self, VALUE newval) {
   rb_rect_set_height(self, NUM2INT(newval));
   return newval;
 }
 
+/*
+ * call-seq:
+ *    rectangle.to_s -> string
+ *
+ * Returns the string representation of the rectangle.
+ */
 static VALUE rb_rect_m_to_s(VALUE self) {
   struct Rect *ptr = convertRect(self);
   char s[50];
@@ -259,6 +358,12 @@ static VALUE rb_rect_m_to_s(VALUE self) {
   return rb_str_new2(s);
 }
 
+/*
+ * call-seq:
+ *   Rect._load(str) -> rectangle
+ *
+ * Loads a rectangle from <code>str</code>. Used in <code>Marshal.load</code>.
+ */
 static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = rect_alloc(rb_cRect);
   struct Rect *ptr = convertRect(ret);
@@ -271,6 +376,12 @@ static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
   return ret;
 }
 
+/*
+ * call-seq:
+ *   rectangle._dump(limit) -> string
+ *
+ * Dumps a rectangle to a string. Used in <code>Marshal.dump</code>.
+ */
 static VALUE rb_rect_m_old_dump(VALUE self, VALUE limit) {
   struct Rect *ptr = convertRect(self);
   char s[16];
