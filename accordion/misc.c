@@ -53,3 +53,22 @@ void writeInt32(char *ptr, int32_t val) {
   ptr[2] = num.u32>>16;
   ptr[3] = num.u32>>24;
 }
+
+union u16i_converter {
+  uint16_t u16;
+  int16_t i16;
+};
+
+int16_t readInt16(const char *ptr) {
+  union u16i_converter num;
+  num.u16 =
+    ((uint16_t)(unsigned char)ptr[0])|
+    ((uint16_t)(unsigned char)ptr[1]<<8);
+  return num.i16;
+}
+void writeInt16(char *ptr, int16_t val) {
+  union u16i_converter num;
+  num.i16 = val;
+  ptr[0] = num.u16;
+  ptr[1] = num.u16>>8;
+}
