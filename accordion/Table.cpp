@@ -3,6 +3,95 @@
 #include "Table.h"
 #include "misc.h"
 
+Table *convertTable(VALUE obj);
+static void table_mark(Table *);
+static void table_free(Table *);
+static VALUE table_alloc(VALUE klass);
+
+VALUE rb_table_new(int32_t dim, int32_t xsize, int32_t ysize, int32_t zsize) {
+  VALUE ret = table_alloc(rb_cTable);
+  struct Table *ptr = convertTable(ret);
+  ptr->dim = dim;
+  ptr->xsize = xsize;
+  ptr->ysize = ysize;
+  ptr->zsize = zsize;
+  ptr->size = xsize * ysize * zsize;
+  ptr->data = new short[ptr->size];
+  std::fill_n(ptr->data, ptr->size, 0);
+  return ret;
+}
+
+void rb_table_resize(
+    VALUE self, int32_t new_dim, int32_t new_xsize,
+    int32_t new_ysize, int32_t new_zsize) {
+  struct Table *ptr = convertTable(self);
+  int32_t new_size = new_xsize*new_ysize*new_zsize;
+  short *new_data = new short[new_size];
+  std::fill_n(new_data, new_size, 0);
+  if(ptr->data) {
+    int xsize_min = std::min(ptr->xsize, new_xsize);
+    int ysize_min = std::min(ptr->ysize, new_ysize);
+    int zsize_min = std::min(ptr->zsize, new_zsize);
+    for(int z = 0; z < zsize_min; ++z) {
+      for(int y = 0; y < ysize_min; ++y) {
+        for(int x = 0; x < xsize_min; ++x) {
+          new_data[(z*new_ysize+y)*new_xsize+x] =
+            ptr->data[(z*ptr->ysize+y)*ptr->xsize+x];
+        }
+      }
+    }
+    delete[] ptr->data;
+  }
+  ptr->dim = new_dim;
+  ptr->xsize = new_xsize;
+  ptr->ysize = new_ysize;
+  ptr->zsize = new_zsize;
+  ptr->data = new_data;
+}
+
+int32_t rb_table_dim(VALUE self) {
+  struct Table *ptr = convertTable(self);
+  return ptr->dim;
+}
+
+int32_t rb_table_xsize(VALUE self) {
+  struct Table *ptr = convertTable(self);
+  return ptr->xsize;
+}
+
+int32_t rb_table_ysize(VALUE self) {
+  struct Table *ptr = convertTable(self);
+  return ptr->ysize;
+}
+
+int32_t rb_table_zsize(VALUE self) {
+  struct Table *ptr = convertTable(self);
+  return ptr->zsize;
+}
+
+int16_t rb_table_aref(VALUE self, int32_t x, int32_t y, int32_t z) {
+  struct Table *ptr = convertTable(self);
+  if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
+      0 <= z && z < ptr->zsize) {
+    return ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x];
+  } else {
+    return Qnil;
+  }
+}
+
+void rb_table_aset(VALUE self, int32_t x, int32_t y, int32_t z, int16_t val) {
+  struct Table *ptr = convertTable(self);
+  if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
+      0 <= z && z < ptr->zsize) {
+    ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
+  }
+}
+
+short *rb_table_data(VALUE self) {
+  struct Table *ptr = convertTable(self);
+  return ptr->data;
+}
+
 void Table::resize_internal(int new_dim, int new_xsize, int new_ysize, int new_zsize) {
   short *new_data = new short[new_xsize*new_ysize*new_zsize];
   std::fill_n(new_data, new_xsize*new_ysize*new_zsize, 0);
@@ -74,38 +163,34 @@ void Table::set(int x, short val) {
   set_internal(1, x, 0, 0, val);
 }
 
-static void table_mark(Table *);
-static void table_free(Table *);
-static VALUE table_alloc(VALUE klass);
+static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self);
+static VALUE rb_table_m_initialize_copy(VALUE self, VALUE orig);
 
-static VALUE rb_table_initialize(int argc, VALUE *argv, VALUE self);
-static VALUE rb_table_initialize_copy(VALUE self, VALUE orig);
-
-static VALUE rb_table_resize(int argc, VALUE *argv, VALUE self);
-static VALUE rb_table_get(int argc, VALUE *argv, VALUE self);
-static VALUE rb_table_set(int argc, VALUE *argv, VALUE self);
-static VALUE rb_table_old_load(VALUE self, VALUE s);
-static VALUE rb_table_old_dump(VALUE self, VALUE lim);
+static VALUE rb_table_m_resize(int argc, VALUE *argv, VALUE self);
+static VALUE rb_table_m_get(int argc, VALUE *argv, VALUE self);
+static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self);
+static VALUE rb_table_m_old_load(VALUE self, VALUE s);
+static VALUE rb_table_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cTable;
 void InitTable() {
   rb_cTable = rb_define_class("Table", rb_cObject);
   rb_define_alloc_func(rb_cTable, table_alloc);
   rb_define_method(rb_cTable, "initialize",
-      (VALUE(*)(...))rb_table_initialize, -1);
+      (VALUE(*)(...))rb_table_m_initialize, -1);
   rb_define_method(rb_cTable, "initialize_copy",
-      (VALUE(*)(...))rb_table_initialize_copy, 1);
+      (VALUE(*)(...))rb_table_m_initialize_copy, 1);
   rb_define_method(rb_cTable, "resize",
-      (VALUE(*)(...))rb_table_resize, -1);
+      (VALUE(*)(...))rb_table_m_resize, -1);
   rb_define_method(rb_cTable, "[]",
-      (VALUE(*)(...))rb_table_get, -1);
+      (VALUE(*)(...))rb_table_m_get, -1);
   rb_define_method(rb_cTable, "[]=",
-      (VALUE(*)(...))rb_table_set, -1);
+      (VALUE(*)(...))rb_table_m_set, -1);
 
   rb_define_singleton_method(rb_cTable, "_load",
-      (VALUE(*)(...))rb_table_old_load, 1);
+      (VALUE(*)(...))rb_table_m_old_load, 1);
   rb_define_method(rb_cTable, "_dump",
-      (VALUE(*)(...))rb_table_old_dump, 1);
+      (VALUE(*)(...))rb_table_m_old_dump, 1);
 }
 
 Table *convertTable(VALUE obj) {
@@ -122,9 +207,6 @@ Table *convertTable(VALUE obj) {
 Table *convertTableOrNil(VALUE obj) {
   if(NIL_P(obj)) return NULL;
   return convertTable(obj);
-}
-VALUE exportTable(Table *ptr) {
-  return ptr ? ptr->rb_parent : Qnil;
 }
 
 Table *Table::create(int xsize, int ysize, int zsize) {
@@ -156,11 +238,10 @@ static VALUE table_alloc(VALUE klass) {
   Table *ptr = ALLOC(Table);
   ptr->data = nullptr;
   VALUE ret = Data_Wrap_Struct(klass, table_mark, table_free, ptr);
-  ptr->rb_parent = ret;
   return ret;
 }
 
-static VALUE rb_table_initialize(int argc, VALUE *argv, VALUE self) {
+static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   ptr->data = nullptr;
   if(1 <= argc && argc <= 3) {
@@ -175,7 +256,7 @@ static VALUE rb_table_initialize(int argc, VALUE *argv, VALUE self) {
   }
   return Qnil;
 }
-static VALUE rb_table_initialize_copy(VALUE self, VALUE orig) {
+static VALUE rb_table_m_initialize_copy(VALUE self, VALUE orig) {
   Table *ptr = convertTable(self);
   Table *orig_ptr = convertTable(orig);
   ptr->dim = orig_ptr->dim;
@@ -188,7 +269,7 @@ static VALUE rb_table_initialize_copy(VALUE self, VALUE orig) {
   return Qnil;
 }
 
-static VALUE rb_table_resize(int argc, VALUE *argv, VALUE self) {
+static VALUE rb_table_m_resize(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   if(1 <= argc && argc <= 3) {
     ptr->resize_internal(
@@ -202,7 +283,7 @@ static VALUE rb_table_resize(int argc, VALUE *argv, VALUE self) {
   }
   return Qnil;
 }
-static VALUE rb_table_get(int argc, VALUE *argv, VALUE self) {
+static VALUE rb_table_m_get(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   if(argc == ptr->dim) {
     int x = 0 < argc ? NUM2INT(argv[0]) : 0;
@@ -219,7 +300,7 @@ static VALUE rb_table_get(int argc, VALUE *argv, VALUE self) {
   }
   return Qnil;
 }
-static VALUE rb_table_set(int argc, VALUE *argv, VALUE self) {
+static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self) {
   Table *ptr = convertTable(self);
   if(argc == ptr->dim+1) {
     int x = 0 < argc-1 ? NUM2INT(argv[0]) : 0;
@@ -249,7 +330,7 @@ static short get_short(const char *ptr) {
     ((uint32_t)(unsigned char)ptr[1]<<8);
 }
 
-static VALUE rb_table_old_load(VALUE, VALUE str) {
+static VALUE rb_table_m_old_load(VALUE, VALUE str) {
   VALUE ret = table_alloc(rb_cTable);
   Table *ptr = convertTable(ret);
   ptr->data = nullptr;
@@ -294,7 +375,7 @@ static void put_short(char *ptr, uint32_t val) {
   ptr[0] = val;
   ptr[1] = val>>8;
 }
-static VALUE rb_table_old_dump(VALUE self, VALUE) {
+static VALUE rb_table_m_old_dump(VALUE self, VALUE) {
   Table *ptr = convertTable(self);
   int size = ptr->xsize * ptr->ysize * ptr->zsize;
   char *s = new char[20+2*size];

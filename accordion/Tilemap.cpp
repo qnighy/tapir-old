@@ -13,9 +13,9 @@ void Tilemap::initialize(Viewport *viewport) {
   for(int i = 0; i < 9; ++i) this->bitmaps[i] = nullptr;
   this->bitmap_array = bitmaparray_alloc(rb_cBitmapArray);
   convertBitmapArray(this->bitmap_array)->tilemap = this;
-  this->map_data = nullptr;
-  this->flash_data = nullptr;
-  this->flags = nullptr;
+  this->map_data = Qnil;
+  this->flash_data = Qnil;
+  this->flags = Qnil;
   this->viewport = viewport;
   this->visible = true;
   this->ox = 0;
@@ -84,10 +84,10 @@ static int autotilemap[4][96] = {
 void Tilemap::render(
     SDL_Renderer *renderer,
     int rox, int roy, int rwidth, int rheight, bool is_sub) {
-  if(!this->visible || !this->map_data) return;
-  int zsize = this->map_data->zsize;
-  int ysize = this->map_data->ysize;
-  int xsize = this->map_data->xsize;
+  if(!this->visible || NIL_P(this->map_data)) return;
+  int zsize = rb_table_zsize(this->map_data);
+  int ysize = rb_table_ysize(this->map_data);
+  int xsize = rb_table_xsize(this->map_data);
   if(ysize == 0 || xsize == 0) return;
   bool updated = false;
   if(!cached_data) {
@@ -99,8 +99,9 @@ void Tilemap::render(
     updated = true;
   } else {
     int size = xsize*ysize*zsize;
+    short *map_data_data = rb_table_data(map_data);
     for(int i = 0; i < size; ++i) {
-      if(map_data->data[i] != cached_data[i]) {
+      if(map_data_data[i] != cached_data[i]) {
         updated = true;
       }
     }
@@ -131,8 +132,9 @@ void Tilemap::render(
     cached_zsize = zsize;
     cached_data = new short[xsize*ysize*zsize];
     int size = xsize*ysize*zsize;
+    short *map_data_data = rb_table_data(map_data);
     for(int i = 0; i < size; ++i) {
-      cached_data[i] = map_data->data[i];
+      cached_data[i] = map_data_data[i];
     }
   }
   // return;
@@ -150,7 +152,7 @@ void Tilemap::render(
       int zi = j >= 3 ? 2 : j == 2 ? 3 : j;
       for(int yi = 0; yi < ysize; ++yi) {
         for(int xi = 0; xi < xsize; ++xi) {
-          int tileid = this->map_data->get(xi, yi, zi);
+          int tileid = rb_table_aref(this->map_data, xi, yi, zi);
           if(j == 2) {
             SDL_Rect dst_rect;
             for(int off = 0; off < 4; ++off) {
@@ -161,7 +163,8 @@ void Tilemap::render(
             }
             continue;
           }
-          int flag = this->flags ? this->flags->get(tileid) : 0;
+          int flag = NIL_P(this->flags) ? 0 :
+            rb_table_aref(this->flags, tileid, 0, 0);
           if((flag&0x0010) && j==3) continue;
           if((!(flag&0x0010)) && j==4) continue;
           if(0x0000 < tileid && tileid < 0x0400) {
@@ -391,9 +394,9 @@ static void tilemap_mark(Tilemap *ptr) {
   for(int i = 0; i < 9; ++i) {
     if(ptr->bitmaps[i]) rb_gc_mark(ptr->bitmaps[i]->rb_parent);
   }
-  if(ptr->map_data) rb_gc_mark(ptr->map_data->rb_parent);
-  if(ptr->flash_data) rb_gc_mark(ptr->flash_data->rb_parent);
-  if(ptr->flags) rb_gc_mark(ptr->flags->rb_parent);
+  if(ptr->map_data) rb_gc_mark(ptr->map_data);
+  if(ptr->flash_data) rb_gc_mark(ptr->flash_data);
+  if(ptr->flags) rb_gc_mark(ptr->flags);
   if(ptr->viewport) rb_gc_mark(ptr->viewport->rb_parent);
 }
 
@@ -407,9 +410,9 @@ static VALUE tilemap_alloc(VALUE klass) {
   for(int i = 0; i < 9; ++i) {
     ptr->bitmaps[i] = nullptr;
   }
-  ptr->map_data = nullptr;
-  ptr->flash_data = nullptr;
-  ptr->flags = nullptr;
+  ptr->map_data = Qnil;
+  ptr->flash_data = Qnil;
+  ptr->flags = Qnil;
   ptr->viewport = nullptr;
   for(int i = 0; i < 3; ++i) {
     for(int j = 0; j < 5; ++j) {
@@ -472,29 +475,29 @@ static VALUE rb_tilemap_bitmaps(VALUE self) {
 }
 static VALUE rb_tilemap_map_data(VALUE self) {
   Tilemap *ptr = convertTilemap(self);
-  return exportTable(ptr->map_data);
+  return ptr->map_data;
 }
 static VALUE rb_tilemap_set_map_data(VALUE self, VALUE map_data) {
   Tilemap *ptr = convertTilemap(self);
-  ptr->map_data = convertTableOrNil(map_data);
+  ptr->map_data = map_data;
   return map_data;
 }
 static VALUE rb_tilemap_flash_data(VALUE self) {
   Tilemap *ptr = convertTilemap(self);
-  return exportTable(ptr->flash_data);
+  return ptr->flash_data;
 }
 static VALUE rb_tilemap_set_flash_data(VALUE self, VALUE flash_data) {
   Tilemap *ptr = convertTilemap(self);
-  ptr->flash_data = convertTableOrNil(flash_data);
+  ptr->flash_data = flash_data;
   return flash_data;
 }
 static VALUE rb_tilemap_flags(VALUE self) {
   Tilemap *ptr = convertTilemap(self);
-  return exportTable(ptr->flags);
+  return ptr->flags;
 }
 static VALUE rb_tilemap_set_flags(VALUE self, VALUE flags) {
   Tilemap *ptr = convertTilemap(self);
-  ptr->flags = convertTableOrNil(flags);
+  ptr->flags = flags;
   return flags;
 }
 static VALUE rb_tilemap_viewport(VALUE self) {
