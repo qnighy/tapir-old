@@ -7,6 +7,7 @@ struct Tone {
 
 static bool isTone(VALUE obj);
 static struct Tone *convertTone(VALUE obj);
+static void rb_tone_modify(VALUE obj);
 static void tone_mark(struct Tone *);
 static VALUE tone_alloc(VALUE klass);
 
@@ -37,6 +38,7 @@ void rb_tone_set(
     VALUE self, double newred, double newgreen, double newblue,
     double newgray) {
   struct Tone *ptr = convertTone(self);
+  rb_tone_modify(self);
   ptr->red = saturateDouble(newred, -255.0, 255.0);
   ptr->green = saturateDouble(newgreen, -255.0, 255.0);
   ptr->blue = saturateDouble(newblue, -255.0, 255.0);
@@ -46,11 +48,18 @@ void rb_tone_set(
 void rb_tone_set2(VALUE self, VALUE other) {
   struct Tone *ptr = convertTone(self);
   struct Tone *other_ptr = convertTone(other);
-  // RGSS BUG: It doesn't saturate given values.
+  rb_tone_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->red = saturateDouble(other_ptr->red, -255.0, 255.0);
+  ptr->green = saturateDouble(other_ptr->green, -255.0, 255.0);
+  ptr->blue = saturateDouble(other_ptr->blue, -255.0, 255.0);
+  ptr->gray = saturateDouble(other_ptr->gray, 0.0, 255.0);
+#else
   ptr->red = other_ptr->red;
   ptr->green = other_ptr->green;
   ptr->blue = other_ptr->blue;
   ptr->gray = other_ptr->gray;
+#endif
 }
 
 double rb_tone_red(VALUE self) {
@@ -59,6 +68,7 @@ double rb_tone_red(VALUE self) {
 }
 void rb_tone_set_red(VALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
+  rb_tone_modify(self);
   ptr->red = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_tone_green(VALUE self) {
@@ -67,6 +77,7 @@ double rb_tone_green(VALUE self) {
 }
 void rb_tone_set_green(VALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
+  rb_tone_modify(self);
   ptr->green = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_tone_blue(VALUE self) {
@@ -75,6 +86,7 @@ double rb_tone_blue(VALUE self) {
 }
 void rb_tone_set_blue(VALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
+  rb_tone_modify(self);
   ptr->blue = saturateDouble(newval, -255.0, 255.0);
 }
 double rb_tone_gray(VALUE self) {
@@ -83,6 +95,7 @@ double rb_tone_gray(VALUE self) {
 }
 void rb_tone_set_gray(VALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
+  rb_tone_modify(self);
   ptr->gray = saturateDouble(newval, 0.0, 255.0);
 }
 
@@ -140,20 +153,35 @@ bool isTone(VALUE obj) {
 
 struct Tone *convertTone(VALUE obj) {
   Check_Type(obj, T_DATA);
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))tone_mark) {
     rb_raise(rb_eTypeError,
         "can't convert %s into Tone",
         rb_class2name(rb_obj_class(obj)));
   }
+#endif
   struct Tone *ret;
   Data_Get_Struct(obj, struct Tone, ret);
   return ret;
+}
+
+static void rb_tone_modify(VALUE obj) {
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(OBJ_FROZEN(obj)) rb_error_frozen("Tone");
+  if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
+    rb_raise(rb_eSecurityError, "Insecure: can't modify Tone");
+  }
+#endif
 }
 
 static void tone_mark(struct Tone *ptr) {}
 
 static VALUE tone_alloc(VALUE klass) {
   struct Tone *ptr = ALLOC(struct Tone);
+  ptr->red = 0.0;
+  ptr->green = 0.0;
+  ptr->blue = 0.0;
+  ptr->gray = 0.0;
   VALUE ret = Data_Wrap_Struct(klass, tone_mark, -1, ptr);
   return ret;
 }
@@ -358,9 +386,8 @@ static VALUE rb_tone_m_set_gray(VALUE self, VALUE newval) {
  */
 static VALUE rb_tone_m_to_s(VALUE self) {
   struct Tone *ptr = convertTone(self);
-  char s[50];
-  // RGSS BUG: It doesn't use snprintf.
-  sprintf(s, "(%f, %f, %f, %f)",
+  char s[100];
+  snprintf(s, sizeof(s), "(%f, %f, %f, %f)",
       ptr->red, ptr->green, ptr->blue, ptr->gray);
   return rb_str_new2(s);
 }
@@ -374,13 +401,27 @@ static VALUE rb_tone_m_to_s(VALUE self) {
 static VALUE rb_tone_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = tone_alloc(rb_cTone);
   struct Tone *ptr = convertTone(ret);
-  char *s = StringValuePtr(str);
+  StringValue(str);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  Check_Type(str, T_STRING);
+#endif
+  const char *s = RSTRING_PTR(str);
+  rb_tone_modify(ret);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(RSTRING_LEN(str) != sizeof(double)*4) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Tone.");
+  }
+  ptr->red = saturateDouble(readDouble(s+sizeof(double)*0), -255.0, 255.0);
+  ptr->green = saturateDouble(readDouble(s+sizeof(double)*1), -255.0, 255.0);
+  ptr->blue = saturateDouble(readDouble(s+sizeof(double)*2), -255.0, 255.0);
+  ptr->gray = saturateDouble(readDouble(s+sizeof(double)*3), 0.0, 255.0);
+#else
   if(!s) return ret;
-  // RGSS BUG: It doesn't saturate read values.
-  ptr->red = readDouble(s);
-  ptr->green = readDouble(s+8);
-  ptr->blue = readDouble(s+16);
-  ptr->gray = readDouble(s+24);
+  ptr->red = readDouble(s+sizeof(double)*0);
+  ptr->green = readDouble(s+sizeof(double)*1);
+  ptr->blue = readDouble(s+sizeof(double)*2);
+  ptr->gray = readDouble(s+sizeof(double)*3);
+#endif
   return ret;
 }
 
@@ -392,11 +433,11 @@ static VALUE rb_tone_m_old_load(VALUE klass, VALUE str) {
  */
 static VALUE rb_tone_m_old_dump(VALUE self, VALUE limit) {
   struct Tone *ptr = convertTone(self);
-  char s[32];
-  writeDouble(s, ptr->red);
-  writeDouble(s+8, ptr->green);
-  writeDouble(s+16, ptr->blue);
-  writeDouble(s+24, ptr->gray);
-  VALUE ret = rb_str_new(s, 32);
+  char s[sizeof(double)*4];
+  writeDouble(s+sizeof(double)*0, ptr->red);
+  writeDouble(s+sizeof(double)*1, ptr->green);
+  writeDouble(s+sizeof(double)*2, ptr->blue);
+  writeDouble(s+sizeof(double)*3, ptr->gray);
+  VALUE ret = rb_str_new(s, sizeof(s));
   return ret;
 }

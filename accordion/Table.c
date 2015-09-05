@@ -7,23 +7,51 @@ struct Table {
 };
 
 struct Table *convertTable(VALUE obj);
+static void rb_table_modify(VALUE obj);
 static void table_mark(struct Table *);
 static void table_free(struct Table *);
 static VALUE table_alloc(VALUE klass);
 
+#define SQRT_UINT32_MAX ((uint32_t)1<<16)
+
+static int32_t multiply_size(
+    uint32_t xsize, uint32_t ysize, uint32_t zsize) {
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if((xsize >= SQRT_UINT32_MAX || ysize >= SQRT_UINT32_MAX) &&
+      xsize > 0 && UINT32_MAX / xsize < ysize) {
+    goto fail;
+  }
+  uint32_t xysize = xsize * ysize;
+  if((xysize >= SQRT_UINT32_MAX || zsize >= SQRT_UINT32_MAX) &&
+      xysize > 0 && UINT32_MAX / xysize < zsize) {
+    goto fail;
+  }
+  uint32_t size = xysize * zsize;
+  if(size > (INT32_MAX - 20) / 2) {
+    goto fail;
+  }
+  return xsize * ysize * zsize;
+fail:
+  rb_raise(rb_eArgError, "Multiplied table size is too large.");
+#else
+  return xsize * ysize * zsize;
+#endif
+}
+
 VALUE rb_table_new(int32_t dim, int32_t xsize, int32_t ysize, int32_t zsize) {
-  VALUE ret = table_alloc(rb_cTable);
-  struct Table *ptr = convertTable(ret);
   if(xsize < 0) xsize = 0;
   if(ysize < 0) ysize = 0;
   if(zsize < 0) zsize = 0;
+  int32_t size = multiply_size(xsize, ysize, zsize);
+  VALUE ret = table_alloc(rb_cTable);
+  struct Table *ptr = convertTable(ret);
   ptr->dim = dim;
   ptr->xsize = xsize;
   ptr->ysize = ysize;
   ptr->zsize = zsize;
-  ptr->size = xsize * ysize * zsize;
-  ptr->data = ALLOC_N(int16_t, ptr->size);
-  for(int32_t i = 0; i < ptr->size; ++i) {
+  ptr->size = size;
+  ptr->data = ALLOC_N(int16_t, size);
+  for(int32_t i = 0; i < size; ++i) {
     ptr->data[i] = 0;
   }
   return ret;
@@ -36,7 +64,8 @@ void rb_table_resize(
   if(new_xsize < 0) new_xsize = 0;
   if(new_ysize < 0) new_ysize = 0;
   if(new_zsize < 0) new_zsize = 0;
-  int32_t new_size = new_xsize*new_ysize*new_zsize;
+  rb_table_modify(self);
+  int32_t new_size = multiply_size(new_xsize, new_ysize, new_zsize);
   int16_t *new_data = ALLOC_N(int16_t, new_size);
   for(int32_t i = 0; i < new_size; ++i) {
     new_data[i] = 0;
@@ -97,6 +126,7 @@ void rb_table_aset(VALUE self, int32_t x, int32_t y, int32_t z, int16_t val) {
   struct Table *ptr = convertTable(self);
   if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
       0 <= z && z < ptr->zsize) {
+    rb_table_modify(self);
     ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
   }
 }
@@ -132,14 +162,25 @@ void InitTable() {
 
 struct Table *convertTable(VALUE obj) {
   Check_Type(obj, T_DATA);
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))table_mark) {
     rb_raise(rb_eTypeError,
         "can't convert %s into Table",
         rb_class2name(rb_obj_class(obj)));
   }
+#endif
   struct Table *ret;
   Data_Get_Struct(obj, struct Table, ret);
   return ret;
+}
+
+static void rb_table_modify(VALUE obj) {
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(OBJ_FROZEN(obj)) rb_error_frozen("Table");
+  if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
+    rb_raise(rb_eSecurityError, "Insecure: can't modify Table");
+  }
+#endif
 }
 
 static void table_mark(struct Table *ptr) {}
@@ -176,6 +217,7 @@ static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_table_m_initialize_copy(VALUE self, VALUE orig) {
   struct Table *ptr = convertTable(self);
   struct Table *orig_ptr = convertTable(orig);
+  rb_table_modify(self);
   ptr->dim = orig_ptr->dim;
   ptr->xsize = orig_ptr->xsize;
   ptr->ysize = orig_ptr->ysize;
@@ -234,31 +276,41 @@ static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self) {
 static VALUE rb_table_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = table_alloc(rb_cTable);
   struct Table *ptr = convertTable(ret);
-  ptr->data = NULL;
-  str = StringValue(str);
-  char *s = StringValuePtr(str);
-  if(!s) {
-    fprintf(stderr, "warning: broken marshal data of Table\n");
-    return ret;
+  StringValue(str);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  Check_Type(str, T_STRING);
+#endif
+  const char *s = RSTRING_PTR(str);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  long s_len = RSTRING_LEN(str);
+  if(s_len < sizeof(int32_t)*5) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
-  int len = RSTRING_LEN(str);
-  if(len < 20) {
-    fprintf(stderr, "warning: broken marshal data of Table\n");
-    return ret;
+#else
+  if(!s) s = "";
+#endif
+  ptr->dim = readInt32(s+sizeof(int32_t)*0);
+  ptr->xsize = readInt32(s+sizeof(int32_t)*1);
+  ptr->ysize = readInt32(s+sizeof(int32_t)*2);
+  ptr->zsize = readInt32(s+sizeof(int32_t)*3);
+  ptr->size = readInt32(s+sizeof(int32_t)*4);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(ptr->dim < 1 || ptr->dim > 3 ||
+      ptr->xsize < 0 || ptr->ysize < 0 || ptr->zsize < 0) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
-  // TODO make it more safe
-  ptr->dim = readInt32(s);
-  ptr->xsize = readInt32(s+4);
-  ptr->ysize = readInt32(s+8);
-  ptr->zsize = readInt32(s+12);
-  ptr->size = readInt32(s+16);
-  if(len < 20+ptr->size*2) {
-    fprintf(stderr, "warning: broken marshal data of Table\n");
-    return ret;
+  if(ptr->size != multiply_size(ptr->xsize, ptr->ysize, ptr->zsize)) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
+  if(len - sizeof(int32_t)*5 != sizeof(int16_t)*ptr->size) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
+  }
+#endif
+  rb_table_modify(ret);
+  if(ptr->data) xfree(ptr->data);
   ptr->data = ALLOC_N(int16_t, ptr->size);
   for(int32_t i = 0; i < ptr->size; ++i) {
-    ptr->data[i] = readInt16(s+20+i*2);
+    ptr->data[i] = readInt16(s+sizeof(int32_t)*5+sizeof(int16_t)*i);
   }
   return ret;
 }

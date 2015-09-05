@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <ruby.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,9 +32,16 @@ inline int32_t saturateInt32(int32_t val, int32_t minval, int32_t maxval) {
 }
 
 inline double saturateDouble(double val, double minval, double maxval) {
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(val <= minval) return minval;
   if(val >= maxval) return maxval;
+  if(minval <= val && val <= maxval) return val;
+  rb_raise(rb_eRangeError, "cannot saturate NaN");
+#else
+  if(val < minval) return minval;
+  if(val > maxval) return maxval;
   return val;
+#endif
 }
 
 #ifdef __cplusplus

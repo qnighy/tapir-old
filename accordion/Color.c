@@ -7,16 +7,22 @@ struct Color {
 
 static bool isColor(VALUE obj);
 static struct Color *convertColor(VALUE obj);
+static void rb_color_modify(VALUE obj);
 static void color_mark(struct Color *);
 static VALUE color_alloc(VALUE klass);
 
 VALUE rb_color_new(double red, double green, double blue, double alpha) {
   VALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
-  // RGSS BUG: It doesn't saturate values correctly.
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->red = saturateDouble(red, 0.0, 255.0);
+  ptr->green = saturateDouble(green, 0.0, 255.0);
+  ptr->blue = saturateDouble(blue, 0.0, 255.0);
+#else
   ptr->red = saturateDouble(red, -255.0, 255.0);
   ptr->green = saturateDouble(green, -255.0, 255.0);
   ptr->blue = saturateDouble(blue, -255.0, 255.0);
+#endif
   ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
   return ret;
 }
@@ -38,21 +44,34 @@ void rb_color_set(
     VALUE self, double newred, double newgreen, double newblue,
     double newalpha) {
   struct Color *ptr = convertColor(self);
-  // RGSS BUG: It doesn't saturate values correctly.
+  rb_color_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->red = saturateDouble(newred, 0.0, 255.0);
+  ptr->green = saturateDouble(newgreen, 0.0, 255.0);
+  ptr->blue = saturateDouble(newblue, 0.0, 255.0);
+#else
   ptr->red = saturateDouble(newred, -255.0, 255.0);
   ptr->green = saturateDouble(newgreen, -255.0, 255.0);
   ptr->blue = saturateDouble(newblue, -255.0, 255.0);
+#endif
   ptr->alpha = saturateDouble(newalpha, 0.0, 255.0);
 }
 
 void rb_color_set2(VALUE self, VALUE other) {
   struct Color *ptr = convertColor(self);
   struct Color *other_ptr = convertColor(other);
-  // RGSS BUG: It doesn't saturate given values.
+  rb_color_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->red = saturateDouble(other_ptr->red, 0.0, 255.0);
+  ptr->green = saturateDouble(other_ptr->green, 0.0, 255.0);
+  ptr->blue = saturateDouble(other_ptr->blue, 0.0, 255.0);
+  ptr->alpha = saturateDouble(other_ptr->alpha, 0.0, 255.0);
+#else
   ptr->red = other_ptr->red;
   ptr->green = other_ptr->green;
   ptr->blue = other_ptr->blue;
   ptr->alpha = other_ptr->alpha;
+#endif
 }
 
 double rb_color_red(VALUE self) {
@@ -61,8 +80,12 @@ double rb_color_red(VALUE self) {
 }
 void rb_color_set_red(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  // RGSS BUG: It doesn't saturate values correctly.
+  rb_color_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->red = saturateDouble(newval, 0.0, 255.0);
+#else
   ptr->red = saturateDouble(newval, -255.0, 255.0);
+#endif
 }
 double rb_color_green(VALUE self) {
   struct Color *ptr = convertColor(self);
@@ -70,8 +93,12 @@ double rb_color_green(VALUE self) {
 }
 void rb_color_set_green(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  // RGSS BUG: It doesn't saturate values correctly.
+  rb_color_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->green = saturateDouble(newval, 0.0, 255.0);
+#else
   ptr->green = saturateDouble(newval, -255.0, 255.0);
+#endif
 }
 double rb_color_blue(VALUE self) {
   struct Color *ptr = convertColor(self);
@@ -79,8 +106,12 @@ double rb_color_blue(VALUE self) {
 }
 void rb_color_set_blue(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
-  // RGSS BUG: It doesn't saturate values correctly.
+  rb_color_modify(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  ptr->blue = saturateDouble(newval, 0.0, 255.0);
+#else
   ptr->blue = saturateDouble(newval, -255.0, 255.0);
+#endif
 }
 double rb_color_alpha(VALUE self) {
   struct Color *ptr = convertColor(self);
@@ -88,6 +119,7 @@ double rb_color_alpha(VALUE self) {
 }
 void rb_color_set_alpha(VALUE self, double newval) {
   struct Color *ptr = convertColor(self);
+  rb_color_modify(self);
   ptr->alpha = saturateDouble(newval, 0.0, 255.0);
 }
 
@@ -145,20 +177,35 @@ bool isColor(VALUE obj) {
 
 struct Color *convertColor(VALUE obj) {
   Check_Type(obj, T_DATA);
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))color_mark) {
     rb_raise(rb_eTypeError,
         "can't convert %s into Color",
         rb_class2name(rb_obj_class(obj)));
   }
+#endif
   struct Color *ret;
   Data_Get_Struct(obj, struct Color, ret);
   return ret;
+}
+
+static void rb_color_modify(VALUE obj) {
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(OBJ_FROZEN(obj)) rb_error_frozen("Color");
+  if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
+    rb_raise(rb_eSecurityError, "Insecure: can't modify Color");
+  }
+#endif
 }
 
 static void color_mark(struct Color *ptr) {}
 
 static VALUE color_alloc(VALUE klass) {
   struct Color *ptr = ALLOC(struct Color);
+  ptr->red = 0.0;
+  ptr->green = 0.0;
+  ptr->blue = 0.0;
+  ptr->alpha = 0.0;
   VALUE ret = Data_Wrap_Struct(klass, color_mark, -1, ptr);
   return ret;
 }
@@ -177,9 +224,13 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
       break;
     case 1:
     case 2:
-      // RGSS BUG: It produces wrong messages.
+#ifdef CORRECT_RGSS_BEHAVIOR
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (%d for 0 or 3..4)", argc);
+#else
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
+#endif
       break;
     case 3:
       rb_color_set(
@@ -198,9 +249,13 @@ static VALUE rb_color_m_initialize(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
-      // RGSS BUG: It produces wrong messages.
+#ifdef CORRECT_RGSS_BEHAVIOR
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (%d for 0 or 3..4)", argc);
+#else
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
+#endif
       break;
   }
   return Qnil;
@@ -236,15 +291,24 @@ static VALUE rb_color_m_equal(VALUE self, VALUE other) {
 static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
   switch(argc) {
     case 0:
+#ifdef CORRECT_RGSS_BEHAVIOR
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (%d for 1, 3..4)", argc);
+#else
       rb_color_set(self, 0.0, 0.0, 0.0, 0.0);
+#endif
       break;
     case 1:
       rb_color_set2(self, argv[0]);
       break;
     case 2:
-      // RGSS BUG: It produces wrong messages.
+#ifdef CORRECT_RGSS_BEHAVIOR
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (%d for 1, 3..4)", argc);
+#else
       rb_raise(rb_eArgError,
           "wrong number of arguments (3 for %d)", argc);
+#endif
       break;
     case 3:
       rb_color_set(
@@ -263,9 +327,13 @@ static VALUE rb_color_m_set(int argc, VALUE *argv, VALUE self) {
           NUM2DBL(argv[3]));
       break;
     default:
-      // RGSS BUG: It produces wrong messages.
+#ifdef CORRECT_RGSS_BEHAVIOR
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (%d for 1, 3..4)", argc);
+#else
       rb_raise(rb_eArgError,
           "wrong number of arguments (4 for %d)", argc);
+#endif
       break;
   }
   return self;
@@ -363,9 +431,8 @@ static VALUE rb_color_m_set_alpha(VALUE self, VALUE newval) {
  */
 static VALUE rb_color_m_to_s(VALUE self) {
   struct Color *ptr = convertColor(self);
-  char s[50];
-  // RGSS BUG: It doesn't use snprintf.
-  sprintf(s, "(%f, %f, %f, %f)",
+  char s[100];
+  snprintf(s, sizeof(s), "(%f, %f, %f, %f)",
       ptr->red, ptr->green, ptr->blue, ptr->alpha);
   return rb_str_new2(s);
 }
@@ -379,13 +446,27 @@ static VALUE rb_color_m_to_s(VALUE self) {
 static VALUE rb_color_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
-  char *s = StringValuePtr(str);
+  StringValue(str);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  Check_Type(str, T_STRING);
+#endif
+  const char *s = RSTRING_PTR(str);
+  rb_color_modify(ret);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(RSTRING_LEN(str) != sizeof(double)*4) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Color.");
+  }
+  ptr->red = saturateDouble(readDouble(s+sizeof(double)*0), 0.0, 255.0);
+  ptr->green = saturateDouble(readDouble(s+sizeof(double)*1), 0.0, 255.0);
+  ptr->blue = saturateDouble(readDouble(s+sizeof(double)*2), 0.0, 255.0);
+  ptr->alpha = saturateDouble(readDouble(s+sizeof(double)*3), 0.0, 255.0);
+#else
   if(!s) return ret;
-  // RGSS BUG: It doesn't saturate read values.
-  ptr->red = readDouble(s);
-  ptr->green = readDouble(s+8);
-  ptr->blue = readDouble(s+16);
-  ptr->alpha = readDouble(s+24);
+  ptr->red = readDouble(s+sizeof(double)*0);
+  ptr->green = readDouble(s+sizeof(double)*1);
+  ptr->blue = readDouble(s+sizeof(double)*2);
+  ptr->alpha = readDouble(s+sizeof(double)*3);
+#endif
   return ret;
 }
 
@@ -397,11 +478,11 @@ static VALUE rb_color_m_old_load(VALUE klass, VALUE str) {
  */
 static VALUE rb_color_m_old_dump(VALUE self, VALUE limit) {
   struct Color *ptr = convertColor(self);
-  char s[32];
-  writeDouble(s, ptr->red);
-  writeDouble(s+8, ptr->green);
-  writeDouble(s+16, ptr->blue);
-  writeDouble(s+24, ptr->alpha);
-  VALUE ret = rb_str_new(s, 32);
+  char s[sizeof(double)*4];
+  writeDouble(s+sizeof(double)*0, ptr->red);
+  writeDouble(s+sizeof(double)*1, ptr->green);
+  writeDouble(s+sizeof(double)*2, ptr->blue);
+  writeDouble(s+sizeof(double)*3, ptr->alpha);
+  VALUE ret = rb_str_new(s, sizeof(s));
   return ret;
 }

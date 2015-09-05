@@ -7,6 +7,7 @@ struct Rect {
 
 bool isRect(VALUE obj);
 struct Rect *convertRect(VALUE obj);
+static void rb_rect_modify(VALUE obj);
 static void rect_mark(struct Rect *);
 static VALUE rect_alloc(VALUE klass);
 
@@ -38,6 +39,7 @@ void rb_rect_set(
     VALUE self, int32_t newx, int32_t newy,
     int32_t newwidth, int32_t newheight) {
   struct Rect *ptr = convertRect(self);
+  rb_rect_modify(self);
   ptr->x = newx;
   ptr->y = newy;
   ptr->width = newwidth;
@@ -47,6 +49,7 @@ void rb_rect_set(
 void rb_rect_set2(VALUE self, VALUE other) {
   struct Rect *ptr = convertRect(self);
   struct Rect *other_ptr = convertRect(other);
+  rb_rect_modify(self);
   ptr->x = other_ptr->x;
   ptr->y = other_ptr->y;
   ptr->width = other_ptr->width;
@@ -59,6 +62,7 @@ int32_t rb_rect_x(VALUE self) {
 }
 void rb_rect_set_x(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
+  rb_rect_modify(self);
   ptr->x = newval;
 }
 int32_t rb_rect_y(VALUE self) {
@@ -67,6 +71,7 @@ int32_t rb_rect_y(VALUE self) {
 }
 void rb_rect_set_y(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
+  rb_rect_modify(self);
   ptr->y = newval;
 }
 int32_t rb_rect_width(VALUE self) {
@@ -75,6 +80,7 @@ int32_t rb_rect_width(VALUE self) {
 }
 void rb_rect_set_width(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
+  rb_rect_modify(self);
   ptr->width = newval;
 }
 int32_t rb_rect_height(VALUE self) {
@@ -83,6 +89,7 @@ int32_t rb_rect_height(VALUE self) {
 }
 void rb_rect_set_height(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
+  rb_rect_modify(self);
   ptr->height = newval;
 }
 
@@ -142,20 +149,35 @@ bool isRect(VALUE obj) {
 
 struct Rect *convertRect(VALUE obj) {
   Check_Type(obj, T_DATA);
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))rect_mark) {
     rb_raise(rb_eTypeError,
         "can't convert %s into Rect",
         rb_class2name(rb_obj_class(obj)));
   }
+#endif
   struct Rect *ret;
   Data_Get_Struct(obj, struct Rect, ret);
   return ret;
+}
+
+static void rb_rect_modify(VALUE obj) {
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(OBJ_FROZEN(obj)) rb_error_frozen("Rect");
+  if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
+    rb_raise(rb_eSecurityError, "Insecure: can't modify Rect");
+  }
+#endif
 }
 
 static void rect_mark(struct Rect *ptr) {}
 
 static VALUE rect_alloc(VALUE klass) {
   struct Rect *ptr = ALLOC(struct Rect);
+  ptr->x = 0;
+  ptr->y = 0;
+  ptr->width = 0;
+  ptr->height = 0;
   VALUE ret = Data_Wrap_Struct(klass, rect_mark, -1, ptr);
   return ret;
 }
@@ -369,12 +391,23 @@ static VALUE rb_rect_m_to_s(VALUE self) {
 static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
   VALUE ret = rect_alloc(rb_cRect);
   struct Rect *ptr = convertRect(ret);
-  char *s = StringValuePtr(str);
+  StringValue(str);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  Check_Type(str, T_STRING);
+#endif
+  const char *s = RSTRING_PTR(str);
+  rb_rect_modify(ret);
+#ifdef CORRECT_RGSS_BEHAVIOR
+  if(RSTRING_LEN(str) != sizeof(int32_t)*4) {
+    rb_raise(rb_eArgError, "Corrupted marshal data for Rect.");
+  }
+#else
   if(!s) return ret;
-  ptr->x = readInt32(s);
-  ptr->y = readInt32(s+4);
-  ptr->width = readInt32(s+8);
-  ptr->height = readInt32(s+12);
+#endif
+  ptr->x = readInt32(s+sizeof(int32_t)*0);
+  ptr->y = readInt32(s+sizeof(int32_t)*1);
+  ptr->width = readInt32(s+sizeof(int32_t)*2);
+  ptr->height = readInt32(s+sizeof(int32_t)*3);
   return ret;
 }
 
@@ -386,11 +419,11 @@ static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
  */
 static VALUE rb_rect_m_old_dump(VALUE self, VALUE limit) {
   struct Rect *ptr = convertRect(self);
-  char s[16];
-  writeInt32(s, ptr->x);
-  writeInt32(s+4, ptr->y);
-  writeInt32(s+8, ptr->width);
-  writeInt32(s+12, ptr->height);
-  VALUE ret = rb_str_new(s, 16);
+  char s[sizeof(int32_t)*4];
+  writeInt32(s+sizeof(int32_t)*0, ptr->x);
+  writeInt32(s+sizeof(int32_t)*1, ptr->y);
+  writeInt32(s+sizeof(int32_t)*2, ptr->width);
+  writeInt32(s+sizeof(int32_t)*3, ptr->height);
+  VALUE ret = rb_str_new(s, sizeof(s));
   return ret;
 }
