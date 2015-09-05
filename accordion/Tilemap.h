@@ -29,7 +29,7 @@ struct Tilemap {
 
   SDL_Texture *textures[3][5];
   int cached_xsize, cached_ysize, cached_zsize;
-  short *cached_data;
+  int16_t *cached_data;
 
   TilemapSub sub;
 

@@ -99,7 +99,7 @@ void Tilemap::render(
     updated = true;
   } else {
     int size = xsize*ysize*zsize;
-    short *map_data_data = rb_table_data(map_data);
+    int16_t *map_data_data = rb_table_data(map_data);
     for(int i = 0; i < size; ++i) {
       if(map_data_data[i] != cached_data[i]) {
         updated = true;
@@ -130,9 +130,9 @@ void Tilemap::render(
     cached_xsize = xsize;
     cached_ysize = ysize;
     cached_zsize = zsize;
-    cached_data = new short[xsize*ysize*zsize];
+    cached_data = new int16_t[xsize*ysize*zsize];
     int size = xsize*ysize*zsize;
-    short *map_data_data = rb_table_data(map_data);
+    int16_t *map_data_data = rb_table_data(map_data);
     for(int i = 0; i < size; ++i) {
       cached_data[i] = map_data_data[i];
     }

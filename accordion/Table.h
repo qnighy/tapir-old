@@ -5,6 +5,10 @@
 
 #include <ruby.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern VALUE rb_cTable;
 extern void InitTable(void);
 
@@ -26,6 +30,10 @@ int16_t rb_table_aref(VALUE self, int32_t x, int32_t y, int32_t z);
 
 void rb_table_aset(VALUE self, int32_t x, int32_t y, int32_t z, int16_t val);
 
-short *rb_table_data(VALUE self);
+int16_t *rb_table_data(VALUE self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TABLE_H_INCLUDED
