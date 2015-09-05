@@ -114,21 +114,12 @@ int32_t rb_table_zsize(VALUE self) {
 
 int16_t rb_table_aref(VALUE self, int32_t x, int32_t y, int32_t z) {
   struct Table *ptr = convertTable(self);
-  if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
-      0 <= z && z < ptr->zsize) {
-    return ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x];
-  } else {
-    return Qnil;
-  }
+  return ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x];
 }
 
 void rb_table_aset(VALUE self, int32_t x, int32_t y, int32_t z, int16_t val) {
   struct Table *ptr = convertTable(self);
-  if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
-      0 <= z && z < ptr->zsize) {
-    rb_table_modify(self);
-    ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
-  }
+  ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
 }
 
 int16_t *rb_table_data(VALUE self) {
@@ -140,6 +131,9 @@ static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self);
 static VALUE rb_table_m_initialize_copy(VALUE self, VALUE orig);
 
 static VALUE rb_table_m_resize(int argc, VALUE *argv, VALUE self);
+static VALUE rb_table_m_xsize(VALUE self);
+static VALUE rb_table_m_ysize(VALUE self);
+static VALUE rb_table_m_zsize(VALUE self);
 static VALUE rb_table_m_get(int argc, VALUE *argv, VALUE self);
 static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self);
 static VALUE rb_table_m_old_load(VALUE self, VALUE s);
@@ -153,6 +147,9 @@ void InitTable() {
   rb_define_private_method(rb_cTable, "initialize_copy",
       rb_table_m_initialize_copy, 1);
   rb_define_method(rb_cTable, "resize", rb_table_m_resize, -1);
+  rb_define_method(rb_cTable, "xsize", rb_table_m_xsize, 0);
+  rb_define_method(rb_cTable, "ysize", rb_table_m_ysize, 0);
+  rb_define_method(rb_cTable, "zsize", rb_table_m_zsize, 0);
   rb_define_method(rb_cTable, "[]", rb_table_m_get, -1);
   rb_define_method(rb_cTable, "[]=", rb_table_m_set, -1);
 
@@ -202,6 +199,11 @@ static VALUE table_alloc(VALUE klass) {
 }
 
 static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self) {
+  struct Table *ptr = convertTable(self);
+  if(ptr->data) {
+    xfree(ptr->data);
+    ptr->data = NULL;
+  }
   if(1 <= argc && argc <= 3) {
     rb_table_resize(
         self, argc,
@@ -209,8 +211,18 @@ static VALUE rb_table_m_initialize(int argc, VALUE *argv, VALUE self) {
         1 < argc ? NUM2INT(argv[1]) : 1,
         2 < argc ? NUM2INT(argv[2]) : 1);
   } else {
+#ifdef CORRECT_RGSS_BEHAVIOR
     rb_raise(rb_eArgError,
         "wrong number of arguments (%d for 1..3)", argc);
+#else
+    if(argc < 1) {
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (1 for %d)", argc);
+    } else {
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (3 for %d)", argc);
+    }
+#endif
   }
   return Qnil;
 }
@@ -238,37 +250,82 @@ static VALUE rb_table_m_resize(int argc, VALUE *argv, VALUE self) {
         1 < argc ? NUM2INT(argv[1]) : 1,
         2 < argc ? NUM2INT(argv[2]) : 1);
   } else {
+#ifdef CORRECT_RGSS_BEHAVIOR
     rb_raise(rb_eArgError,
         "wrong number of arguments (%d for 1..3)", argc);
+#else
+    if(argc < 1) {
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (1 for %d)", argc);
+    } else {
+      rb_raise(rb_eArgError,
+          "wrong number of arguments (3 for %d)", argc);
+    }
+#endif
   }
-  return Qnil;
+  return self;
 }
+static VALUE rb_table_m_xsize(VALUE self) {
+  return INT2NUM(rb_table_xsize(self));
+}
+static VALUE rb_table_m_ysize(VALUE self) {
+  return INT2NUM(rb_table_ysize(self));
+}
+static VALUE rb_table_m_zsize(VALUE self) {
+  return INT2NUM(rb_table_zsize(self));
+}
+
 static VALUE rb_table_m_get(int argc, VALUE *argv, VALUE self) {
   struct Table *ptr = convertTable(self);
   if(argc == ptr->dim) {
-    return INT2NUM((int)rb_table_aref(
-          self,
-          0 < argc ? NUM2INT(argv[0]) : 0,
-          1 < argc ? NUM2INT(argv[1]) : 0,
-          2 < argc ? NUM2INT(argv[2]) : 0));
+    int32_t x = 0 < argc ? NUM2INT(argv[0]) : 0;
+    int32_t y = 1 < argc ? NUM2INT(argv[1]) : 0;
+    int32_t z = 2 < argc ? NUM2INT(argv[2]) : 0;
+    if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
+        0 <= z && z < ptr->zsize) {
+      return INT2NUM(ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x]);
+    } else {
+      return Qnil;
+    }
   } else {
+#ifdef CORRECT_RGSS_BEHAVIOR
     rb_raise(rb_eArgError,
         "wrong number of arguments (%d for %d)", argc, ptr->dim);
+#else
+    rb_raise(rb_eArgError,
+        "wrong number of arguments (%d for %d)", ptr->dim, argc);
+#endif
   }
   return Qnil;
 }
+
 static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self) {
   struct Table *ptr = convertTable(self);
+#ifdef CORRECT_RGSS_BEHAVIOR
   if(argc == ptr->dim+1) {
-    rb_table_aset(
-        self,
-        0 < argc-1 ? NUM2INT(argv[0]) : 0,
-        1 < argc-1 ? NUM2INT(argv[1]) : 0,
-        2 < argc-1 ? NUM2INT(argv[2]) : 0,
-        NUM2INT(argv[argc-1]));
+#else
+  if(argc == ptr->dim+1 || argc == ptr->dim) {
+#endif
+    int32_t x = 0 < argc-1 ? NUM2INT(argv[0]) : 0;
+    int32_t y = 1 < argc-1 ? NUM2INT(argv[1]) : 0;
+    int32_t z = 2 < argc-1 ? NUM2INT(argv[2]) : 0;
+    int16_t val = wrapToInt16(NUM2INT(argv[argc-1]));
+    if(0 <= x && x < ptr->xsize && 0 <= y && y < ptr->ysize &&
+        0 <= z && z < ptr->zsize) {
+      rb_table_modify(self);
+      ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
+      return INT2NUM(val);
+    } else {
+      return Qnil;
+    }
   } else {
+#ifdef CORRECT_RGSS_BEHAVIOR
     rb_raise(rb_eArgError,
         "wrong number of arguments (%d for %d)", argc, ptr->dim+1);
+#else
+    rb_raise(rb_eArgError,
+        "wrong number of arguments (%d for %d)", ptr->dim, argc);
+#endif
   }
   return Qnil;
 }
@@ -283,7 +340,7 @@ static VALUE rb_table_m_old_load(VALUE klass, VALUE str) {
   const char *s = RSTRING_PTR(str);
 #ifdef CORRECT_RGSS_BEHAVIOR
   long s_len = RSTRING_LEN(str);
-  if(s_len < sizeof(int32_t)*5) {
+  if(s_len < (long)(sizeof(int32_t)*5)) {
     rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
 #else
@@ -302,7 +359,7 @@ static VALUE rb_table_m_old_load(VALUE klass, VALUE str) {
   if(ptr->size != multiply_size(ptr->xsize, ptr->ysize, ptr->zsize)) {
     rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
-  if(len - sizeof(int32_t)*5 != sizeof(int16_t)*ptr->size) {
+  if(s_len - sizeof(int32_t)*5 != sizeof(int16_t)*ptr->size) {
     rb_raise(rb_eArgError, "Corrupted marshal data for Table.");
   }
 #endif
