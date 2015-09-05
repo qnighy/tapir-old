@@ -115,7 +115,7 @@ static VALUE rb_tone_m_set_blue(VALUE self, VALUE blue);
 static VALUE rb_tone_m_gray(VALUE self);
 static VALUE rb_tone_m_set_gray(VALUE self, VALUE gray);
 static VALUE rb_tone_m_to_s(VALUE self);
-static VALUE rb_tone_m_old_load(VALUE self, VALUE s);
+static VALUE rb_tone_s_old_load(VALUE self, VALUE s);
 static VALUE rb_tone_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cTone;
@@ -142,7 +142,7 @@ void Init_Tone(void) {
   rb_define_method(rb_cTone, "gray", rb_tone_m_gray, 0);
   rb_define_method(rb_cTone, "gray=", rb_tone_m_set_gray, 1);
   rb_define_method(rb_cTone, "to_s", rb_tone_m_to_s, 0);
-  rb_define_singleton_method(rb_cTone, "_load", rb_tone_m_old_load, 1);
+  rb_define_singleton_method(rb_cTone, "_load", rb_tone_s_old_load, 1);
   rb_define_method(rb_cTone, "_dump", rb_tone_m_old_dump, 1);
 }
 
@@ -398,7 +398,7 @@ static VALUE rb_tone_m_to_s(VALUE self) {
  *
  * Loads a tone from <code>str</code>. Used in <code>Marshal.load</code>.
  */
-static VALUE rb_tone_m_old_load(VALUE klass, VALUE str) {
+static VALUE rb_tone_s_old_load(VALUE klass, VALUE str) {
   VALUE ret = tone_alloc(rb_cTone);
   struct Tone *ptr = convertTone(ret);
   StringValue(str);

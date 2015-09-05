@@ -139,7 +139,7 @@ static VALUE rb_color_m_set_blue(VALUE self, VALUE blue);
 static VALUE rb_color_m_alpha(VALUE self);
 static VALUE rb_color_m_set_alpha(VALUE self, VALUE alpha);
 static VALUE rb_color_m_to_s(VALUE self);
-static VALUE rb_color_m_old_load(VALUE self, VALUE s);
+static VALUE rb_color_s_old_load(VALUE self, VALUE s);
 static VALUE rb_color_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cColor;
@@ -166,7 +166,7 @@ void Init_Color(void) {
   rb_define_method(rb_cColor, "alpha", rb_color_m_alpha, 0);
   rb_define_method(rb_cColor, "alpha=", rb_color_m_set_alpha, 1);
   rb_define_method(rb_cColor, "to_s", rb_color_m_to_s, 0);
-  rb_define_singleton_method(rb_cColor, "_load", rb_color_m_old_load, 1);
+  rb_define_singleton_method(rb_cColor, "_load", rb_color_s_old_load, 1);
   rb_define_method(rb_cColor, "_dump", rb_color_m_old_dump, 1);
 }
 
@@ -443,7 +443,7 @@ static VALUE rb_color_m_to_s(VALUE self) {
  *
  * Loads a color from <code>str</code>. Used in <code>Marshal.load</code>.
  */
-static VALUE rb_color_m_old_load(VALUE klass, VALUE str) {
+static VALUE rb_color_s_old_load(VALUE klass, VALUE str) {
   VALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
   StringValue(str);

@@ -110,7 +110,7 @@ static VALUE rb_rect_m_set_width(VALUE self, VALUE width);
 static VALUE rb_rect_m_height(VALUE self);
 static VALUE rb_rect_m_set_height(VALUE self, VALUE height);
 static VALUE rb_rect_m_to_s(VALUE self);
-static VALUE rb_rect_m_old_load(VALUE self, VALUE s);
+static VALUE rb_rect_s_old_load(VALUE self, VALUE s);
 static VALUE rb_rect_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cRect;
@@ -138,7 +138,7 @@ void Init_Rect() {
   rb_define_method(rb_cRect, "height", rb_rect_m_height, 0);
   rb_define_method(rb_cRect, "height=", rb_rect_m_set_height, 1);
   rb_define_method(rb_cRect, "to_s", rb_rect_m_to_s, 0);
-  rb_define_singleton_method(rb_cRect, "_load", rb_rect_m_old_load, 1);
+  rb_define_singleton_method(rb_cRect, "_load", rb_rect_s_old_load, 1);
   rb_define_method(rb_cRect, "_dump", rb_rect_m_old_dump, 1);
 }
 
@@ -388,7 +388,7 @@ static VALUE rb_rect_m_to_s(VALUE self) {
  *
  * Loads a rectangle from <code>str</code>. Used in <code>Marshal.load</code>.
  */
-static VALUE rb_rect_m_old_load(VALUE klass, VALUE str) {
+static VALUE rb_rect_s_old_load(VALUE klass, VALUE str) {
   VALUE ret = rect_alloc(rb_cRect);
   struct Rect *ptr = convertRect(ret);
   StringValue(str);

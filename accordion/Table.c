@@ -136,7 +136,7 @@ static VALUE rb_table_m_ysize(VALUE self);
 static VALUE rb_table_m_zsize(VALUE self);
 static VALUE rb_table_m_get(int argc, VALUE *argv, VALUE self);
 static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self);
-static VALUE rb_table_m_old_load(VALUE self, VALUE s);
+static VALUE rb_table_s_old_load(VALUE self, VALUE s);
 static VALUE rb_table_m_old_dump(VALUE self, VALUE lim);
 
 VALUE rb_cTable;
@@ -153,7 +153,7 @@ void InitTable() {
   rb_define_method(rb_cTable, "[]", rb_table_m_get, -1);
   rb_define_method(rb_cTable, "[]=", rb_table_m_set, -1);
 
-  rb_define_singleton_method(rb_cTable, "_load", rb_table_m_old_load, 1);
+  rb_define_singleton_method(rb_cTable, "_load", rb_table_s_old_load, 1);
   rb_define_method(rb_cTable, "_dump", rb_table_m_old_dump, 1);
 }
 
@@ -330,7 +330,7 @@ static VALUE rb_table_m_set(int argc, VALUE *argv, VALUE self) {
   return Qnil;
 }
 
-static VALUE rb_table_m_old_load(VALUE klass, VALUE str) {
+static VALUE rb_table_s_old_load(VALUE klass, VALUE str) {
   VALUE ret = table_alloc(rb_cTable);
   struct Table *ptr = convertTable(ret);
   StringValue(str);
