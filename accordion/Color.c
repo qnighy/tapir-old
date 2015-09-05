@@ -120,7 +120,7 @@ VALUE rb_cColor;
 void Init_Color(void) {
   rb_cColor = rb_define_class("Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, color_alloc);
-  rb_define_method(rb_cColor, "initialize", rb_color_m_initialize, -1);
+  rb_define_private_method(rb_cColor, "initialize", rb_color_m_initialize, -1);
   rb_define_private_method(rb_cColor, "initialize_copy",
       rb_color_m_initialize_copy, 1);
   rb_define_method(rb_cColor, "==", rb_color_m_equal, 1);

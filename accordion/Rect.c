@@ -116,7 +116,7 @@ VALUE rb_cRect;
 void Init_Rect() {
   rb_cRect = rb_define_class("Rect", rb_cObject);
   rb_define_alloc_func(rb_cRect, rect_alloc);
-  rb_define_method(rb_cRect, "initialize", rb_rect_m_initialize, -1);
+  rb_define_private_method(rb_cRect, "initialize", rb_rect_m_initialize, -1);
   rb_define_private_method(rb_cRect, "initialize_copy",
       rb_rect_m_initialize_copy, 1);
   rb_define_method(rb_cRect, "==", rb_rect_m_equal, 1);

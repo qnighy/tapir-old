@@ -115,7 +115,7 @@ VALUE rb_cTone;
 void Init_Tone(void) {
   rb_cTone = rb_define_class("Tone", rb_cObject);
   rb_define_alloc_func(rb_cTone, tone_alloc);
-  rb_define_method(rb_cTone, "initialize", rb_tone_m_initialize, -1);
+  rb_define_private_method(rb_cTone, "initialize", rb_tone_m_initialize, -1);
   rb_define_private_method(rb_cTone, "initialize_copy",
       rb_tone_m_initialize_copy, 1);
   rb_define_method(rb_cTone, "==", rb_tone_m_equal, 1);
