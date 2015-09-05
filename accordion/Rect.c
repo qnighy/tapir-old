@@ -2,7 +2,7 @@
 #include "misc.h"
 
 struct Rect {
-  int x, y, width, height;
+  int32_t x, y, width, height;
 };
 
 bool isRect(VALUE obj);
@@ -10,7 +10,7 @@ struct Rect *convertRect(VALUE obj);
 static void rect_mark(struct Rect *);
 static VALUE rect_alloc(VALUE klass);
 
-VALUE rb_rect_new(int x, int y, int width, int height) {
+VALUE rb_rect_new(int32_t x, int32_t y, int32_t width, int32_t height) {
   VALUE ret = rect_alloc(rb_cRect);
   struct Rect *ptr = convertRect(ret);
   ptr->x = x;
@@ -34,7 +34,9 @@ bool rb_rect_equal(VALUE self, VALUE other) {
     ptr->height == other_ptr->height;
 }
 
-void rb_rect_set(VALUE self, int newx, int newy, int newwidth, int newheight) {
+void rb_rect_set(
+    VALUE self, int32_t newx, int32_t newy,
+    int32_t newwidth, int32_t newheight) {
   struct Rect *ptr = convertRect(self);
   ptr->x = newx;
   ptr->y = newy;
@@ -51,35 +53,35 @@ void rb_rect_set2(VALUE self, VALUE other) {
   ptr->height = other_ptr->height;
 }
 
-int rb_rect_x(VALUE self) {
+int32_t rb_rect_x(VALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->x;
 }
-void rb_rect_set_x(VALUE self, int newval) {
+void rb_rect_set_x(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   ptr->x = newval;
 }
-int rb_rect_y(VALUE self) {
+int32_t rb_rect_y(VALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->y;
 }
-void rb_rect_set_y(VALUE self, int newval) {
+void rb_rect_set_y(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   ptr->y = newval;
 }
-int rb_rect_width(VALUE self) {
+int32_t rb_rect_width(VALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->width;
 }
-void rb_rect_set_width(VALUE self, int newval) {
+void rb_rect_set_width(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   ptr->width = newval;
 }
-int rb_rect_height(VALUE self) {
+int32_t rb_rect_height(VALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->height;
 }
-void rb_rect_set_height(VALUE self, int newval) {
+void rb_rect_set_height(VALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   ptr->height = newval;
 }

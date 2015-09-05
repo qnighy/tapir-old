@@ -8,6 +8,7 @@
 #define RECT_H_INCLUDED
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <ruby.h>
 
@@ -33,7 +34,7 @@ extern void Init_Rect(void);
  * @param[in] height The height field of the color.
  * @return The generated rectangle.
  */
-VALUE rb_rect_new(int x, int y, int width, int height);
+VALUE rb_rect_new(int32_t x, int32_t y, int32_t width, int32_t height);
 
 /**
  * @brief Returns a new rectnagle.
@@ -55,7 +56,9 @@ bool rb_rect_equal(VALUE self, VALUE other);
  * @param[in] newwidth The new width value to be set.
  * @param[in] newheight The new height value to be set.
  */
-void rb_rect_set(VALUE self, int newx, int newy, int newwidth, int newheight);
+void rb_rect_set(
+    VALUE self, int32_t newx, int32_t newy,
+    int32_t newwidth, int32_t newheight);
 
 /**
  * @brief Copies all fields from <code>other</code>.
@@ -69,56 +72,56 @@ void rb_rect_set2(VALUE self, VALUE other);
  * @param[in] self The receiver of the method.
  * @return The x value of the rectangle.
  */
-int rb_rect_x(VALUE self);
+int32_t rb_rect_x(VALUE self);
 
 /**
  * @brief Sets x field.
  * @param[out] self The receiver of the method.
  * @param[in] newval The new x value to be set.
  */
-void rb_rect_set_x(VALUE self, int newx);
+void rb_rect_set_x(VALUE self, int32_t newx);
 
 /**
  * @brief Returns y value.
  * @param[in] self The receiver of the method.
  * @return The y value of the rectangle.
  */
-int rb_rect_y(VALUE self);
+int32_t rb_rect_y(VALUE self);
 
 /**
  * @brief Sets y field.
  * @param[out] self The receiver of the method.
  * @param[in] newval The new y value to be set.
  */
-void rb_rect_set_y(VALUE self, int newy);
+void rb_rect_set_y(VALUE self, int32_t newy);
 
 /**
  * @brief Returns width value.
  * @param[in] self The receiver of the method.
  * @return The width value of the rectangle.
  */
-int rb_rect_width(VALUE self);
+int32_t rb_rect_width(VALUE self);
 
 /**
  * @brief Sets width field.
  * @param[out] self The receiver of the method.
  * @param[in] newval The new width value to be set.
  */
-void rb_rect_set_width(VALUE self, int newwidth);
+void rb_rect_set_width(VALUE self, int32_t newwidth);
 
 /**
  * @brief Returns height value.
  * @param[in] self The receiver of the method.
  * @return The height value of the rectangle.
  */
-int rb_rect_height(VALUE self);
+int32_t rb_rect_height(VALUE self);
 
 /**
  * @brief Sets height field.
  * @param[out] self The receiver of the method.
  * @param[in] newval The new height value to be set.
  */
-void rb_rect_set_height(VALUE self, int newheight);
+void rb_rect_set_height(VALUE self, int32_t newheight);
 
 #ifdef __cplusplus
 }
