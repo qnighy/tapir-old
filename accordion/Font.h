@@ -16,12 +16,12 @@ struct Font {
   VALUE name;
   int size;
   bool bold, italic, shadow, outline;
-  VALUE color, out_color;
+  ColorVALUE color, out_color;
 
   static VALUE default_name;
   static int default_size;
   static bool default_bold, default_italic, default_shadow, default_outline;
-  static VALUE default_color, default_out_color;
+  static ColorVALUE default_color, default_out_color;
 
   void initialize(VALUE name = default_name, int size = default_size);
   static bool exist(VALUE name);

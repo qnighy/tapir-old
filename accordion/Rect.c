@@ -6,13 +6,13 @@ struct Rect {
 };
 
 bool isRect(VALUE obj);
-struct Rect *convertRect(VALUE obj);
-static void rb_rect_modify(VALUE obj);
+struct Rect *convertRect(RectVALUE obj);
+static void rb_rect_modify(RectVALUE obj);
 static void rect_mark(struct Rect *);
-static VALUE rect_alloc(VALUE klass);
+static RectVALUE rect_alloc(VALUE klass);
 
-VALUE rb_rect_new(int32_t x, int32_t y, int32_t width, int32_t height) {
-  VALUE ret = rect_alloc(rb_cRect);
+RectVALUE rb_rect_new(int32_t x, int32_t y, int32_t width, int32_t height) {
+  RectVALUE ret = rect_alloc(rb_cRect);
   struct Rect *ptr = convertRect(ret);
   ptr->x = x;
   ptr->y = y;
@@ -21,11 +21,11 @@ VALUE rb_rect_new(int32_t x, int32_t y, int32_t width, int32_t height) {
   return ret;
 }
 
-VALUE rb_rect_new2(void) {
+RectVALUE rb_rect_new2(void) {
   return rb_rect_new(0, 0, 0, 0);
 }
 
-bool rb_rect_equal(VALUE self, VALUE other) {
+bool rb_rect_equal(RectVALUE self, VALUE other) {
   struct Rect *ptr = convertRect(self);
   struct Rect *other_ptr = convertRect(other);
   return
@@ -36,7 +36,7 @@ bool rb_rect_equal(VALUE self, VALUE other) {
 }
 
 void rb_rect_set(
-    VALUE self, int32_t newx, int32_t newy,
+    RectVALUE self, int32_t newx, int32_t newy,
     int32_t newwidth, int32_t newheight) {
   struct Rect *ptr = convertRect(self);
   rb_rect_modify(self);
@@ -46,7 +46,7 @@ void rb_rect_set(
   ptr->height = newheight;
 }
 
-void rb_rect_set2(VALUE self, VALUE other) {
+void rb_rect_set2(RectVALUE self, RectVALUE other) {
   struct Rect *ptr = convertRect(self);
   struct Rect *other_ptr = convertRect(other);
   rb_rect_modify(self);
@@ -56,38 +56,38 @@ void rb_rect_set2(VALUE self, VALUE other) {
   ptr->height = other_ptr->height;
 }
 
-int32_t rb_rect_x(VALUE self) {
+int32_t rb_rect_x(RectVALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->x;
 }
-void rb_rect_set_x(VALUE self, int32_t newval) {
+void rb_rect_set_x(RectVALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   rb_rect_modify(self);
   ptr->x = newval;
 }
-int32_t rb_rect_y(VALUE self) {
+int32_t rb_rect_y(RectVALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->y;
 }
-void rb_rect_set_y(VALUE self, int32_t newval) {
+void rb_rect_set_y(RectVALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   rb_rect_modify(self);
   ptr->y = newval;
 }
-int32_t rb_rect_width(VALUE self) {
+int32_t rb_rect_width(RectVALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->width;
 }
-void rb_rect_set_width(VALUE self, int32_t newval) {
+void rb_rect_set_width(RectVALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   rb_rect_modify(self);
   ptr->width = newval;
 }
-int32_t rb_rect_height(VALUE self) {
+int32_t rb_rect_height(RectVALUE self) {
   struct Rect *ptr = convertRect(self);
   return ptr->height;
 }
-void rb_rect_set_height(VALUE self, int32_t newval) {
+void rb_rect_set_height(RectVALUE self, int32_t newval) {
   struct Rect *ptr = convertRect(self);
   rb_rect_modify(self);
   ptr->height = newval;
@@ -147,7 +147,7 @@ bool isRect(VALUE obj) {
   return RDATA(obj)->dmark == (void(*)(void*))rect_mark;
 }
 
-struct Rect *convertRect(VALUE obj) {
+struct Rect *convertRect(RectVALUE obj) {
   Check_Type(obj, T_DATA);
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))rect_mark) {
@@ -161,7 +161,7 @@ struct Rect *convertRect(VALUE obj) {
   return ret;
 }
 
-static void rb_rect_modify(VALUE obj) {
+static void rb_rect_modify(RectVALUE obj) {
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(OBJ_FROZEN(obj)) rb_error_frozen("Rect");
   if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
@@ -172,13 +172,13 @@ static void rb_rect_modify(VALUE obj) {
 
 static void rect_mark(struct Rect *ptr) {}
 
-static VALUE rect_alloc(VALUE klass) {
+static RectVALUE rect_alloc(VALUE klass) {
   struct Rect *ptr = ALLOC(struct Rect);
   ptr->x = 0;
   ptr->y = 0;
   ptr->width = 0;
   ptr->height = 0;
-  VALUE ret = Data_Wrap_Struct(klass, rect_mark, -1, ptr);
+  RectVALUE ret = Data_Wrap_Struct(klass, rect_mark, -1, ptr);
   return ret;
 }
 

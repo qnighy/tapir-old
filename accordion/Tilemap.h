@@ -20,7 +20,7 @@ struct Tilemap {
 
   VALUE bitmap_array;
   Bitmap *bitmaps[9];
-  VALUE map_data, flash_data, flags;
+  TableVALUE map_data, flash_data, flags;
   Viewport *viewport;
   bool visible;
   int ox, oy;

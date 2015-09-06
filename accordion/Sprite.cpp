@@ -47,7 +47,7 @@ void Sprite::dispose() {
 bool Sprite::disposed() {
   return this->is_disposed;
 }
-void Sprite::flash(VALUE color, int duration) {
+void Sprite::flash(ColorVALUE color, int duration) {
   fprintf(stderr, "TODO: Sprite::flash\n");
 }
 void Sprite::update() {

@@ -5,14 +5,14 @@ struct Color {
   double red, green, blue, alpha;
 };
 
-static bool isColor(VALUE obj);
-static struct Color *convertColor(VALUE obj);
-static void rb_color_modify(VALUE obj);
+static bool isColor(ColorVALUE obj);
+static struct Color *convertColor(ColorVALUE obj);
+static void rb_color_modify(ColorVALUE obj);
 static void color_mark(struct Color *);
-static VALUE color_alloc(VALUE klass);
+static ColorVALUE color_alloc(VALUE klass);
 
-VALUE rb_color_new(double red, double green, double blue, double alpha) {
-  VALUE ret = color_alloc(rb_cColor);
+ColorVALUE rb_color_new(double red, double green, double blue, double alpha) {
+  ColorVALUE ret = color_alloc(rb_cColor);
   struct Color *ptr = convertColor(ret);
 #ifdef CORRECT_RGSS_BEHAVIOR
   ptr->red = saturateDouble(red, 0.0, 255.0);
@@ -26,11 +26,11 @@ VALUE rb_color_new(double red, double green, double blue, double alpha) {
   ptr->alpha = saturateDouble(alpha, 0.0, 255.0);
   return ret;
 }
-VALUE rb_color_new2(void) {
+ColorVALUE rb_color_new2(void) {
   return rb_color_new(0.0, 0.0, 0.0, 0.0);
 }
 
-bool rb_color_equal(VALUE self, VALUE other) {
+bool rb_color_equal(ColorVALUE self, VALUE other) {
   struct Color *ptr = convertColor(self);
   struct Color *other_ptr = convertColor(other);
   return
@@ -41,7 +41,7 @@ bool rb_color_equal(VALUE self, VALUE other) {
 }
 
 void rb_color_set(
-    VALUE self, double newred, double newgreen, double newblue,
+    ColorVALUE self, double newred, double newgreen, double newblue,
     double newalpha) {
   struct Color *ptr = convertColor(self);
   rb_color_modify(self);
@@ -57,7 +57,7 @@ void rb_color_set(
   ptr->alpha = saturateDouble(newalpha, 0.0, 255.0);
 }
 
-void rb_color_set2(VALUE self, VALUE other) {
+void rb_color_set2(ColorVALUE self, ColorVALUE other) {
   struct Color *ptr = convertColor(self);
   struct Color *other_ptr = convertColor(other);
   rb_color_modify(self);
@@ -74,11 +74,11 @@ void rb_color_set2(VALUE self, VALUE other) {
 #endif
 }
 
-double rb_color_red(VALUE self) {
+double rb_color_red(ColorVALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->red;
 }
-void rb_color_set_red(VALUE self, double newval) {
+void rb_color_set_red(ColorVALUE self, double newval) {
   struct Color *ptr = convertColor(self);
   rb_color_modify(self);
 #ifdef CORRECT_RGSS_BEHAVIOR
@@ -87,11 +87,11 @@ void rb_color_set_red(VALUE self, double newval) {
   ptr->red = saturateDouble(newval, -255.0, 255.0);
 #endif
 }
-double rb_color_green(VALUE self) {
+double rb_color_green(ColorVALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->green;
 }
-void rb_color_set_green(VALUE self, double newval) {
+void rb_color_set_green(ColorVALUE self, double newval) {
   struct Color *ptr = convertColor(self);
   rb_color_modify(self);
 #ifdef CORRECT_RGSS_BEHAVIOR
@@ -100,11 +100,11 @@ void rb_color_set_green(VALUE self, double newval) {
   ptr->green = saturateDouble(newval, -255.0, 255.0);
 #endif
 }
-double rb_color_blue(VALUE self) {
+double rb_color_blue(ColorVALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->blue;
 }
-void rb_color_set_blue(VALUE self, double newval) {
+void rb_color_set_blue(ColorVALUE self, double newval) {
   struct Color *ptr = convertColor(self);
   rb_color_modify(self);
 #ifdef CORRECT_RGSS_BEHAVIOR
@@ -113,11 +113,11 @@ void rb_color_set_blue(VALUE self, double newval) {
   ptr->blue = saturateDouble(newval, -255.0, 255.0);
 #endif
 }
-double rb_color_alpha(VALUE self) {
+double rb_color_alpha(ColorVALUE self) {
   struct Color *ptr = convertColor(self);
   return ptr->alpha;
 }
-void rb_color_set_alpha(VALUE self, double newval) {
+void rb_color_set_alpha(ColorVALUE self, double newval) {
   struct Color *ptr = convertColor(self);
   rb_color_modify(self);
   ptr->alpha = saturateDouble(newval, 0.0, 255.0);
@@ -175,7 +175,7 @@ bool isColor(VALUE obj) {
   return RDATA(obj)->dmark == (void(*)(void*))color_mark;
 }
 
-struct Color *convertColor(VALUE obj) {
+struct Color *convertColor(ColorVALUE obj) {
   Check_Type(obj, T_DATA);
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))color_mark) {
@@ -189,7 +189,7 @@ struct Color *convertColor(VALUE obj) {
   return ret;
 }
 
-static void rb_color_modify(VALUE obj) {
+static void rb_color_modify(ColorVALUE obj) {
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(OBJ_FROZEN(obj)) rb_error_frozen("Color");
   if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
@@ -200,13 +200,13 @@ static void rb_color_modify(VALUE obj) {
 
 static void color_mark(struct Color *ptr) {}
 
-static VALUE color_alloc(VALUE klass) {
+static ColorVALUE color_alloc(VALUE klass) {
   struct Color *ptr = ALLOC(struct Color);
   ptr->red = 0.0;
   ptr->green = 0.0;
   ptr->blue = 0.0;
   ptr->alpha = 0.0;
-  VALUE ret = Data_Wrap_Struct(klass, color_mark, -1, ptr);
+  ColorVALUE ret = Data_Wrap_Struct(klass, color_mark, -1, ptr);
   return ret;
 }
 

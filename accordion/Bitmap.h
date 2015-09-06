@@ -20,32 +20,33 @@ struct Bitmap {
   bool disposed();
   int width();
   int height();
-  VALUE rect();
-  void blt(int x, int y, Bitmap *src_bitmap, VALUE src_rect,
+  RectVALUE rect();
+  void blt(int x, int y, Bitmap *src_bitmap, RectVALUE src_rect,
       int opacity = 255);
-  void stretch_blt(VALUE dest_rect, Bitmap *src_bitmap, VALUE src_rect,
+  void stretch_blt(RectVALUE dest_rect, Bitmap *src_bitmap, RectVALUE src_rect,
       int opacity = 255);
-  void fill_rect(int x, int y, int width, int height, VALUE color);
-  void fill_rect(VALUE rect, VALUE color);
+  void fill_rect(int x, int y, int width, int height, ColorVALUE color);
+  void fill_rect(RectVALUE rect, ColorVALUE color);
   void gradient_fill_rect(
-      int x, int y, int width, int height, VALUE color1, VALUE color2,
+      int x, int y, int width, int height,
+      ColorVALUE color1, ColorVALUE color2,
       bool vertical = false);
   void gradient_fill_rect(
-      VALUE rect, VALUE color1, VALUE color2,
+      RectVALUE rect, ColorVALUE color1, ColorVALUE color2,
       bool vertical = false);
   void clear();
   void clear_rect(int x, int y, int width, int height);
-  void clear_rect(VALUE rect);
-  VALUE get_pixel(int x, int y);
-  void set_pixel(int x, int y, VALUE color);
+  void clear_rect(RectVALUE rect);
+  ColorVALUE get_pixel(int x, int y);
+  void set_pixel(int x, int y, ColorVALUE color);
   void hue_change(int hue);
   void blur();
   void radial_blur(int angle, int division);
   void draw_text(int x, int y, int width, int height, const char *str,
       int align = 0);
-  void draw_text(VALUE rect, const char *str,
+  void draw_text(RectVALUE rect, const char *str,
       int align = 0);
-  VALUE text_size(const char *str);
+  RectVALUE text_size(const char *str);
 
   static Bitmap *create(const char *filename);
   static Bitmap *create(int width, int height);

@@ -16,7 +16,7 @@ struct Sprite {
   VALUE rb_parent;
 
   Bitmap *bitmap;
-  VALUE src_rect;
+  RectVALUE src_rect;
   Viewport *viewport;
   bool visible;
   int x, y, z, ox, oy;
@@ -25,15 +25,15 @@ struct Sprite {
   double wave_phase;
   bool mirror;
   int bush_depth, bush_opacity, opacity, blend_type;
-  VALUE color;
-  VALUE tone;
+  ColorVALUE color;
+  ToneVALUE tone;
 
   bool is_disposed;
 
   void initialize(Viewport *viewport = nullptr);
   void dispose();
   bool disposed();
-  void flash(VALUE color, int duration);
+  void flash(ColorVALUE color, int duration);
   void update();
   int width();
   int height();

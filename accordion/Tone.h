@@ -15,6 +15,8 @@
 extern "C" {
 #endif
 
+typedef VALUE ToneVALUE;
+
 /**
  * @brief Corresponding to the Ruby class Tone.
  */
@@ -33,19 +35,19 @@ extern void Init_Tone(void);
  * @param[in] gray The gray field of the tone.
  * @return The generated tone.
  */
-VALUE rb_tone_new(double red, double green, double blue, double gray);
+ToneVALUE rb_tone_new(double red, double green, double blue, double gray);
 
 /**
  * @brief Returns a new tone.
  * @return The generated tone, with all fields initialized by 0.0.
  */
-VALUE rb_tone_new2(void);
+ToneVALUE rb_tone_new2(void);
 
 /**
  * @brief Compares a tone to another tone.
  * @return true if they're equal, false if not.
  */
-bool rb_tone_equal(VALUE self, VALUE other);
+bool rb_tone_equal(ToneVALUE self, VALUE other);
 
 /**
  * @brief Sets all fields.
@@ -56,7 +58,7 @@ bool rb_tone_equal(VALUE self, VALUE other);
  * @param[in] newgray The new gray value to be set.
  */
 void rb_tone_set(
-    VALUE self, double newred, double newgreen, double newblue,
+    ToneVALUE self, double newred, double newgreen, double newblue,
     double newgray);
 
 /**
@@ -64,63 +66,63 @@ void rb_tone_set(
  * @param[out] self The receiver of the method.
  * @param[in] other The new tone to be set.
  */
-void rb_tone_set2(VALUE self, VALUE other);
+void rb_tone_set2(ToneVALUE self, ToneVALUE other);
 
 /**
  * @brief Returns red value.
  * @param[in] self The receiver of the method.
  * @return The red value of the tone.
  */
-double rb_tone_red(VALUE self);
+double rb_tone_red(ToneVALUE self);
 
 /**
  * @brief Sets red field.
  * @param[out] self The receiver of the method.
  * @param[in] newred The new red value to be set.
  */
-void rb_tone_set_red(VALUE self, double newval);
+void rb_tone_set_red(ToneVALUE self, double newval);
 
 /**
  * @brief Returns green value.
  * @param[in] self The receiver of the method.
  * @return The green value of the tone.
  */
-double rb_tone_green(VALUE self);
+double rb_tone_green(ToneVALUE self);
 
 /**
  * @brief Sets green field.
  * @param[out] self The receiver of the method.
  * @param[in] newgreen The new green value to be set.
  */
-void rb_tone_set_green(VALUE self, double newval);
+void rb_tone_set_green(ToneVALUE self, double newval);
 
 /**
  * @brief Returns blue value.
  * @param[in] self The receiver of the method.
  * @return The blue value of the tone.
  */
-double rb_tone_blue(VALUE self);
+double rb_tone_blue(ToneVALUE self);
 
 /**
  * @brief Sets blue field.
  * @param[out] self The receiver of the method.
  * @param[in] newblue The new blue value to be set.
  */
-void rb_tone_set_blue(VALUE self, double newval);
+void rb_tone_set_blue(ToneVALUE self, double newval);
 
 /**
  * @brief Returns gray value.
  * @param[in] self The receiver of the method.
  * @return The gray value of the tone.
  */
-double rb_tone_gray(VALUE self);
+double rb_tone_gray(ToneVALUE self);
 
 /**
  * @brief Sets gray field.
  * @param[out] self The receiver of the method.
  * @param[in] newgray The new gray value to be set.
  */
-void rb_tone_set_gray(VALUE self, double newval);
+void rb_tone_set_gray(ToneVALUE self, double newval);
 
 #ifdef __cplusplus
 }

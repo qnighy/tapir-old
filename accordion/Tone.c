@@ -6,13 +6,13 @@ struct Tone {
 };
 
 static bool isTone(VALUE obj);
-static struct Tone *convertTone(VALUE obj);
-static void rb_tone_modify(VALUE obj);
+static struct Tone *convertTone(ToneVALUE obj);
+static void rb_tone_modify(ToneVALUE obj);
 static void tone_mark(struct Tone *);
-static VALUE tone_alloc(VALUE klass);
+static ToneVALUE tone_alloc(VALUE klass);
 
-VALUE rb_tone_new(double red, double green, double blue, double gray) {
-  VALUE ret = tone_alloc(rb_cTone);
+ToneVALUE rb_tone_new(double red, double green, double blue, double gray) {
+  ToneVALUE ret = tone_alloc(rb_cTone);
   struct Tone *ptr = convertTone(ret);
   ptr->red = saturateDouble(red, -255.0, 255.0);
   ptr->green = saturateDouble(green, -255.0, 255.0);
@@ -20,11 +20,11 @@ VALUE rb_tone_new(double red, double green, double blue, double gray) {
   ptr->gray = saturateDouble(gray, 0.0, 255.0);
   return ret;
 }
-VALUE rb_tone_new2(void) {
+ToneVALUE rb_tone_new2(void) {
   return rb_tone_new(0.0, 0.0, 0.0, 0.0);
 }
 
-bool rb_tone_equal(VALUE self, VALUE other) {
+bool rb_tone_equal(ToneVALUE self, VALUE other) {
   struct Tone *ptr = convertTone(self);
   struct Tone *other_ptr = convertTone(other);
   return
@@ -35,7 +35,7 @@ bool rb_tone_equal(VALUE self, VALUE other) {
 }
 
 void rb_tone_set(
-    VALUE self, double newred, double newgreen, double newblue,
+    ToneVALUE self, double newred, double newgreen, double newblue,
     double newgray) {
   struct Tone *ptr = convertTone(self);
   rb_tone_modify(self);
@@ -45,7 +45,7 @@ void rb_tone_set(
   ptr->gray = saturateDouble(newgray, 0.0, 255.0);
 }
 
-void rb_tone_set2(VALUE self, VALUE other) {
+void rb_tone_set2(ToneVALUE self, ToneVALUE other) {
   struct Tone *ptr = convertTone(self);
   struct Tone *other_ptr = convertTone(other);
   rb_tone_modify(self);
@@ -62,38 +62,38 @@ void rb_tone_set2(VALUE self, VALUE other) {
 #endif
 }
 
-double rb_tone_red(VALUE self) {
+double rb_tone_red(ToneVALUE self) {
   struct Tone *ptr = convertTone(self);
   return ptr->red;
 }
-void rb_tone_set_red(VALUE self, double newval) {
+void rb_tone_set_red(ToneVALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
   rb_tone_modify(self);
   ptr->red = saturateDouble(newval, -255.0, 255.0);
 }
-double rb_tone_green(VALUE self) {
+double rb_tone_green(ToneVALUE self) {
   struct Tone *ptr = convertTone(self);
   return ptr->green;
 }
-void rb_tone_set_green(VALUE self, double newval) {
+void rb_tone_set_green(ToneVALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
   rb_tone_modify(self);
   ptr->green = saturateDouble(newval, -255.0, 255.0);
 }
-double rb_tone_blue(VALUE self) {
+double rb_tone_blue(ToneVALUE self) {
   struct Tone *ptr = convertTone(self);
   return ptr->blue;
 }
-void rb_tone_set_blue(VALUE self, double newval) {
+void rb_tone_set_blue(ToneVALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
   rb_tone_modify(self);
   ptr->blue = saturateDouble(newval, -255.0, 255.0);
 }
-double rb_tone_gray(VALUE self) {
+double rb_tone_gray(ToneVALUE self) {
   struct Tone *ptr = convertTone(self);
   return ptr->gray;
 }
-void rb_tone_set_gray(VALUE self, double newval) {
+void rb_tone_set_gray(ToneVALUE self, double newval) {
   struct Tone *ptr = convertTone(self);
   rb_tone_modify(self);
   ptr->gray = saturateDouble(newval, 0.0, 255.0);
@@ -151,7 +151,7 @@ bool isTone(VALUE obj) {
   return RDATA(obj)->dmark == (void(*)(void*))tone_mark;
 }
 
-struct Tone *convertTone(VALUE obj) {
+struct Tone *convertTone(ToneVALUE obj) {
   Check_Type(obj, T_DATA);
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))tone_mark) {
@@ -165,7 +165,7 @@ struct Tone *convertTone(VALUE obj) {
   return ret;
 }
 
-static void rb_tone_modify(VALUE obj) {
+static void rb_tone_modify(ToneVALUE obj) {
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(OBJ_FROZEN(obj)) rb_error_frozen("Tone");
   if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
@@ -176,13 +176,13 @@ static void rb_tone_modify(VALUE obj) {
 
 static void tone_mark(struct Tone *ptr) {}
 
-static VALUE tone_alloc(VALUE klass) {
+static ToneVALUE tone_alloc(VALUE klass) {
   struct Tone *ptr = ALLOC(struct Tone);
   ptr->red = 0.0;
   ptr->green = 0.0;
   ptr->blue = 0.0;
   ptr->gray = 0.0;
-  VALUE ret = Data_Wrap_Struct(klass, tone_mark, -1, ptr);
+  ToneVALUE ret = Data_Wrap_Struct(klass, tone_mark, -1, ptr);
   return ret;
 }
 

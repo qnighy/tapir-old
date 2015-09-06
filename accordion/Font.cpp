@@ -36,7 +36,7 @@ VALUE Font::default_name;
 int Font::default_size;
 bool Font::default_bold, Font::default_italic;
 bool Font::default_shadow, Font::default_outline;
-VALUE Font::default_color, Font::default_out_color;
+ColorVALUE Font::default_color, Font::default_out_color;
 
 std::map<std::string, std::string> Font::family_names;
 std::map<std::pair<std::string, int>, TTF_Font*> Font::font_caches;

@@ -64,7 +64,7 @@ int Bitmap::width() {
 int Bitmap::height() {
   return this->surface->h;
 }
-VALUE Bitmap::rect() {
+RectVALUE Bitmap::rect() {
   return rb_rect_new(0, 0, this->surface->w, this->surface->h);
 }
 static void blt(
@@ -162,7 +162,7 @@ static void stretch_blt(
   SDL_UnlockSurface(src_surface);
   SDL_UnlockSurface(dst_surface);
 }
-void Bitmap::blt(int x, int y, Bitmap *src_bitmap, VALUE src_rect,
+void Bitmap::blt(int x, int y, Bitmap *src_bitmap, RectVALUE src_rect,
     int opacity) {
   ::blt(surface, x, y, src_bitmap->surface,
       rb_rect_x(src_rect), rb_rect_y(src_rect),
@@ -172,7 +172,8 @@ void Bitmap::blt(int x, int y, Bitmap *src_bitmap, VALUE src_rect,
     SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::stretch_blt(VALUE dest_rect, Bitmap *src_bitmap, VALUE src_rect,
+void Bitmap::stretch_blt(
+    RectVALUE dest_rect, Bitmap *src_bitmap, RectVALUE src_rect,
     int opacity) {
   ::stretch_blt(
       surface,
@@ -186,7 +187,7 @@ void Bitmap::stretch_blt(VALUE dest_rect, Bitmap *src_bitmap, VALUE src_rect,
     SDL_UpdateTexture(this->texture, NULL, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::fill_rect(int x, int y, int width, int height, VALUE color) {
+void Bitmap::fill_rect(int x, int y, int width, int height, ColorVALUE color) {
   int x1 = std::max(x, 0);
   int y1 = std::max(y, 0);
   int x2 = std::min(x+width, surface->w);
@@ -217,13 +218,13 @@ void Bitmap::fill_rect(int x, int y, int width, int height, VALUE color) {
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::fill_rect(VALUE rect, VALUE color) {
+void Bitmap::fill_rect(RectVALUE rect, ColorVALUE color) {
   fill_rect(
       rb_rect_x(rect), rb_rect_y(rect),
       rb_rect_width(rect), rb_rect_height(rect), color);
 }
 void Bitmap::gradient_fill_rect(
-    int x, int y, int width, int height, VALUE color1, VALUE color2,
+    int x, int y, int width, int height, ColorVALUE color1, ColorVALUE color2,
     bool vertical) {
   int x1 = std::max(x, 0);
   int y1 = std::max(y, 0);
@@ -266,7 +267,7 @@ void Bitmap::gradient_fill_rect(
   }
 }
 void Bitmap::gradient_fill_rect(
-    VALUE rect, VALUE color1, VALUE color2,
+    RectVALUE rect, ColorVALUE color1, ColorVALUE color2,
     bool vertical) {
   gradient_fill_rect(
       rb_rect_x(rect), rb_rect_y(rect),
@@ -299,22 +300,22 @@ void Bitmap::clear_rect(int x, int y, int width, int height) {
     SDL_UpdateTexture(this->texture, &rect, surface->pixels, surface->pitch);
   }
 }
-void Bitmap::clear_rect(VALUE rect) {
+void Bitmap::clear_rect(RectVALUE rect) {
   clear_rect(
       rb_rect_x(rect), rb_rect_y(rect),
       rb_rect_width(rect), rb_rect_height(rect));
 }
-VALUE Bitmap::get_pixel(int x, int y) {
+ColorVALUE Bitmap::get_pixel(int x, int y) {
   SDL_LockSurface(surface);
   Uint32 *pixel =
     (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
   Uint8 red, green, blue, alpha;
   SDL_GetRGBA(*pixel, surface->format, &red, &green, &blue, &alpha);
-  VALUE ret = rb_color_new(red, green, blue, alpha);
+  ColorVALUE ret = rb_color_new(red, green, blue, alpha);
   SDL_UnlockSurface(surface);
   return ret;
 }
-void Bitmap::set_pixel(int x, int y, VALUE color) {
+void Bitmap::set_pixel(int x, int y, ColorVALUE color) {
   SDL_LockSurface(surface);
   Uint32 *pixel =
     (Uint32*)((Uint8*)surface->pixels + y * surface->pitch + x * 4);
@@ -382,13 +383,13 @@ void Bitmap::draw_text(int x, int y, int width, int height, const char *str,
         this->texture, NULL, this->surface->pixels, this->surface->pitch);
   }
 }
-void Bitmap::draw_text(VALUE rect, const char *str,
+void Bitmap::draw_text(RectVALUE rect, const char *str,
     int align) {
   draw_text(
       rb_rect_x(rect), rb_rect_y(rect),
       rb_rect_width(rect), rb_rect_height(rect), str, align);
 }
-VALUE Bitmap::text_size(const char *str) {
+RectVALUE Bitmap::text_size(const char *str) {
   TTF_Font *font = this->font->createTTFFont();
   if(!font) {
     fprintf(stderr, "Font Not Found\n");

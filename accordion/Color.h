@@ -15,6 +15,8 @@
 extern "C" {
 #endif
 
+typedef VALUE ColorVALUE;
+
 /**
  * @brief Corresponding to the Ruby class Color.
  */
@@ -33,19 +35,19 @@ extern void Init_Color(void);
  * @param[in] alpha The alpha field of the color.
  * @return The generated color.
  */
-VALUE rb_color_new(double red, double green, double blue, double alpha);
+ColorVALUE rb_color_new(double red, double green, double blue, double alpha);
 
 /**
  * @brief Returns a new color.
  * @return The generated color, with all fields initialized by 0.0.
  */
-VALUE rb_color_new2(void);
+ColorVALUE rb_color_new2(void);
 
 /**
  * @brief Compares a color to another color.
  * @return true if they're equal, false if not.
  */
-bool rb_color_equal(VALUE self, VALUE other);
+bool rb_color_equal(ColorVALUE self, VALUE other);
 
 /**
  * @brief Sets all fields.
@@ -56,7 +58,7 @@ bool rb_color_equal(VALUE self, VALUE other);
  * @param[in] newalpha The new alpha value to be set.
  */
 void rb_color_set(
-    VALUE self, double newred, double newgreen, double newblue,
+    ColorVALUE self, double newred, double newgreen, double newblue,
     double newalpha);
 
 /**
@@ -64,63 +66,63 @@ void rb_color_set(
  * @param[out] self The receiver of the method.
  * @param[in] other The new color to be set.
  */
-void rb_color_set2(VALUE self, VALUE other);
+void rb_color_set2(ColorVALUE self, ColorVALUE other);
 
 /**
  * @brief Returns red value.
  * @param[in] self The receiver of the method.
  * @return The red value of the color.
  */
-double rb_color_red(VALUE self);
+double rb_color_red(ColorVALUE self);
 
 /**
  * @brief Sets red field.
  * @param[out] self The receiver of the method.
  * @param[in] newred The new red value to be set.
  */
-void rb_color_set_red(VALUE self, double newval);
+void rb_color_set_red(ColorVALUE self, double newval);
 
 /**
  * @brief Returns green value.
  * @param[in] self The receiver of the method.
  * @return The green value of the color.
  */
-double rb_color_green(VALUE self);
+double rb_color_green(ColorVALUE self);
 
 /**
  * @brief Sets green field.
  * @param[out] self The receiver of the method.
  * @param[in] newgreen The new green value to be set.
  */
-void rb_color_set_green(VALUE self, double newval);
+void rb_color_set_green(ColorVALUE self, double newval);
 
 /**
  * @brief Returns blue value.
  * @param[in] self The receiver of the method.
  * @return The blue value of the color.
  */
-double rb_color_blue(VALUE self);
+double rb_color_blue(ColorVALUE self);
 
 /**
  * @brief Sets blue field.
  * @param[out] self The receiver of the method.
  * @param[in] newblue The new blue value to be set.
  */
-void rb_color_set_blue(VALUE self, double newval);
+void rb_color_set_blue(ColorVALUE self, double newval);
 
 /**
  * @brief Returns alpha value.
  * @param[in] self The receiver of the method.
  * @return The alpha value of the color.
  */
-double rb_color_alpha(VALUE self);
+double rb_color_alpha(ColorVALUE self);
 
 /**
  * @brief Sets alpha field.
  * @param[out] self The receiver of the method.
  * @param[in] newalpha The new alpha value to be set.
  */
-void rb_color_set_alpha(VALUE self, double newval);
+void rb_color_set_alpha(ColorVALUE self, double newval);
 
 #ifdef __cplusplus
 }

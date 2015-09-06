@@ -6,11 +6,11 @@ struct Table {
   int16_t *data;
 };
 
-struct Table *convertTable(VALUE obj);
-static void rb_table_modify(VALUE obj);
+struct Table *convertTable(TableVALUE obj);
+static void rb_table_modify(TableVALUE obj);
 static void table_mark(struct Table *);
 static void table_free(struct Table *);
-static VALUE table_alloc(VALUE klass);
+static TableVALUE table_alloc(VALUE klass);
 
 #define SQRT_UINT32_MAX ((uint32_t)1<<16)
 
@@ -38,12 +38,13 @@ fail:
 #endif
 }
 
-VALUE rb_table_new(int32_t dim, int32_t xsize, int32_t ysize, int32_t zsize) {
+TableVALUE rb_table_new(
+    int32_t dim, int32_t xsize, int32_t ysize, int32_t zsize) {
   if(xsize < 0) xsize = 0;
   if(ysize < 0) ysize = 0;
   if(zsize < 0) zsize = 0;
   int32_t size = multiply_size(xsize, ysize, zsize);
-  VALUE ret = table_alloc(rb_cTable);
+  TableVALUE ret = table_alloc(rb_cTable);
   struct Table *ptr = convertTable(ret);
   ptr->dim = dim;
   ptr->xsize = xsize;
@@ -58,7 +59,7 @@ VALUE rb_table_new(int32_t dim, int32_t xsize, int32_t ysize, int32_t zsize) {
 }
 
 void rb_table_resize(
-    VALUE self, int32_t new_dim, int32_t new_xsize,
+    TableVALUE self, int32_t new_dim, int32_t new_xsize,
     int32_t new_ysize, int32_t new_zsize) {
   struct Table *ptr = convertTable(self);
   if(new_xsize < 0) new_xsize = 0;
@@ -92,37 +93,38 @@ void rb_table_resize(
   ptr->data = new_data;
 }
 
-int32_t rb_table_dim(VALUE self) {
+int32_t rb_table_dim(TableVALUE self) {
   struct Table *ptr = convertTable(self);
   return ptr->dim;
 }
 
-int32_t rb_table_xsize(VALUE self) {
+int32_t rb_table_xsize(TableVALUE self) {
   struct Table *ptr = convertTable(self);
   return ptr->xsize;
 }
 
-int32_t rb_table_ysize(VALUE self) {
+int32_t rb_table_ysize(TableVALUE self) {
   struct Table *ptr = convertTable(self);
   return ptr->ysize;
 }
 
-int32_t rb_table_zsize(VALUE self) {
+int32_t rb_table_zsize(TableVALUE self) {
   struct Table *ptr = convertTable(self);
   return ptr->zsize;
 }
 
-int16_t rb_table_aref(VALUE self, int32_t x, int32_t y, int32_t z) {
+int16_t rb_table_aref(TableVALUE self, int32_t x, int32_t y, int32_t z) {
   struct Table *ptr = convertTable(self);
   return ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x];
 }
 
-void rb_table_aset(VALUE self, int32_t x, int32_t y, int32_t z, int16_t val) {
+void rb_table_aset(
+    TableVALUE self, int32_t x, int32_t y, int32_t z, int16_t val) {
   struct Table *ptr = convertTable(self);
   ptr->data[((z * ptr->ysize) + y) * ptr->xsize + x] = val;
 }
 
-int16_t *rb_table_data(VALUE self) {
+int16_t *rb_table_data(TableVALUE self) {
   struct Table *ptr = convertTable(self);
   return ptr->data;
 }
@@ -157,7 +159,7 @@ void InitTable() {
   rb_define_method(rb_cTable, "_dump", rb_table_m_old_dump, 1);
 }
 
-struct Table *convertTable(VALUE obj) {
+struct Table *convertTable(TableVALUE obj) {
   Check_Type(obj, T_DATA);
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(RDATA(obj)->dmark != (void(*)(void*))table_mark) {
@@ -171,7 +173,7 @@ struct Table *convertTable(VALUE obj) {
   return ret;
 }
 
-static void rb_table_modify(VALUE obj) {
+static void rb_table_modify(TableVALUE obj) {
 #ifdef CORRECT_RGSS_BEHAVIOR
   if(OBJ_FROZEN(obj)) rb_error_frozen("Table");
   if(!OBJ_UNTRUSTED(obj) && rb_safe_level() >= 4) {
@@ -186,7 +188,7 @@ static void table_free(struct Table *ptr) {
   xfree(ptr);
 }
 
-static VALUE table_alloc(VALUE klass) {
+static TableVALUE table_alloc(VALUE klass) {
   struct Table *ptr = ALLOC(struct Table);
   ptr->dim = 0;
   ptr->xsize = 0;
@@ -194,7 +196,7 @@ static VALUE table_alloc(VALUE klass) {
   ptr->zsize = 0;
   ptr->size = 0;
   ptr->data = NULL;
-  VALUE ret = Data_Wrap_Struct(klass, table_mark, table_free, ptr);
+  TableVALUE ret = Data_Wrap_Struct(klass, table_mark, table_free, ptr);
   return ret;
 }
 
