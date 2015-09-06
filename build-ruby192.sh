@@ -1,8 +1,6 @@
 #!/bin/sh
 set -ue
 
-git submodule update --init --depth 1 ruby192
-
 cd "$(dirname $(readlink -f "$0"))"
 cd ruby192
 autoconf
